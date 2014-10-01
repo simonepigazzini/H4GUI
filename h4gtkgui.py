@@ -12,15 +12,15 @@ class H4GtkGui:
 
     def configure(self):
 
-        self.debug=True
+        self.debug=False
 
-        self.pubsocket_bind_address='tcp://*:5566'
+        self.pubsocket_bind_address='tcp://*:6888'
 
         self.nodes=[
-            ('RC','tcp://pcethtb2.cern.ch:6002')
-#            ('RO1',),
-#            ('RO2',),
-#            ('EVTB',)
+            ('RC','tcp://pcethtb2.cern.ch:6002'),
+            ('RO1','tcp://localhost:6901'),
+            ('RO2','tcp://localhost:6902'),
+            ('EVTB','tcp://localhost:6903')
             ]
 
         self.gui_out_messages={
@@ -31,10 +31,33 @@ class H4GtkGui:
             'die': 'GUI_DIE'
             }
         self.gui_in_messages={
-            'status': 'GUI_STATUS',
+            'status': 'STATUS',
             'log': 'GUI_LOG',
             'error': 'GUI_ERROR'
             }
+        self.rsdict={ #imported from H4DAQ/interface/Command.hpp 
+            0:'START',
+            1:'INIT',
+            2:'INITIALIZED',
+            3:'BEGINSPILL',
+            4:'CLEARED',
+            5:'CLEARBUSY',
+            6:'WAITTRIG',
+            7:'READ',
+            8:'ENDSPILL',
+            9:'RECVBUFFER',
+            10:'SENTBUFFER',
+            11:'SPILLCOMPLETED',
+            12:'BYE',
+            13:'ERROR'
+            }
+        self.remotestatus_juststarted=0
+        self.remotestatus_betweenruns=2
+        self.remotestatus_betweenspills=3
+        self.remotestatus_restartafterpause=4
+        self.remotestatuses_datataking=[5,6,7]
+        self.remotestatuses_running=[3,4,5,6,7,8,9,10,11]
+        self.remotestatuses_stopped=[0,1,2,12]
 
     def __init__(self):
 
@@ -45,14 +68,16 @@ class H4GtkGui:
             'runnumber': 0,
             'spillnumber': 0,
             'evinrun': 0,
-            'evinspill': 0
+            'evinspill': 0,
+            'lastbuiltspill':0
             }
         self.remotestatus={}
+        self.remotestatuscode={}
         self.remoterunnr={}
         self.remotespillnr={}
         for node,addr in self.nodes:
-#            self.remotestatus[node]='UNKNOWN' IMPL DEBUG!!!
-            self.remotestatus[node]='INITIALIZED'
+            self.remotestatuscode[node]=self.remotestatus_juststarted
+            self.remotestatus[node]=self.rsdict[self.remotestatuscode[node]]
             self.remoterunnr[node]=0
             self.remotespillnr[node]=0
         self.allbuttons=['createbutton','startbutton','pausebutton','stopbutton']
@@ -76,6 +101,8 @@ class H4GtkGui:
         self.gotostatus('INIT')
         self.mainWindow.show()
 
+        self.mywaiter = waiter(self.gm)
+
         self.aliveblinkstatus=False
         gobject.timeout_add(1000,self.change_color_blinkingalive)
         self.alarms={}
@@ -89,31 +116,34 @@ class H4GtkGui:
     def start_network(self):
         self.context = Context()
         self.poller = Poller()
-        self.sub = self.context.socket(SUB)
+        self.sub={}
+        self.keepalivecounter={}
         for node,addr in self.nodes:
-            self.sub.connect(addr)
-        self.sub.setsockopt(SUBSCRIBE,'')
-        self.poller.register(self.sub,POLLIN)
+            self.sub[node] = self.context.socket(SUB)
+            self.sub[node].connect(addr)
+            self.sub[node].setsockopt(SUBSCRIBE,'')
+            self.poller.register(self.sub[node],POLLIN)
+            self.keepalivecounter[node]=True
         self.pub = self.context.socket(PUB)
         self.pub.bind(self.pubsocket_bind_address)
         gobject.idle_add(self.poll_sockets)
-        self.keepalivecounter=True
         gobject.timeout_add(1000,self.check_keepalive)
         return False
     def poll_sockets(self):
         socks = dict(self.poller.poll(1))
-        if (socks.get(self.sub)):
-            mysocket = self.sub
-            message = mysocket.recv()
-            self.keepalivecounter=True
-            self.proc_message(message)
+        for node,sock in self.sub.iteritems():
+            if (socks.get(sock)):
+                message = sock.recv()
+                self.keepalivecounter[node]=True
+                self.proc_message(node,message)
         return True
     def check_keepalive(self):
-        if (self.keepalivecounter==False):
-            self.set_alarm('Lost connection with run controller',1)
-        else:
-            self.unset_alarm('Lost connection with run controller')
-        self.keepalivecounter=False
+        for node in self.sub.keys():
+            if (self.keepalivecounter[node]==False):
+                self.set_alarm('Lost connection with '+str(node),1)
+            else:
+                self.unset_alarm('Lost connection with '+str(node))
+            self.keepalivecounter[node]=False
         return True
     def send_message(self,msg,param='',forcereturn=None):
         mymsg=msg
@@ -124,27 +154,34 @@ class H4GtkGui:
         self.pub.send(mymsg)
         if not forcereturn==None:
             return forcereturn
-    def proc_message(self,msg):
+    def proc_message(self,node,msg):
         if (self.debug):
-            self.Log(str(' ').join(('Processing message',str(msg))))
+            newmsg=str(msg)
+            self.Log(str(' ').join(('Processing message from',str(node),':',newmsg)))
         parts = msg.split(' ')
-        if len(parts)<2:
+        if len(parts)<1:
             return
         tit = parts[0]
-        node = parts[1]
-        parts = parts[2:]
-        if node not in self.nodes:
-            return
-        if tit=='GUI_STATUS':
+        parts = parts[1:]
+        if tit==self.gui_in_messages['status']:
             oldstatus=self.remotestatus[node]
-            self.remotestatus[node]=str(parts[0])
-            if self.remotestatus[node] in ['CLEARBUSY','WAITTRIG','READ']:
+            try:
+                if len(parts)>0:
+                    self.remotestatuscode[node]=int(parts[0])
+                if len(parts)>1:
+                    self.remoterunnr[node]=int(parts[1])
+                if len(parts)>2:
+                    self.remotespillnr[node]=int(parts[2])
+            except ValueError:
+                self.Log('Impossible to interpret message: <'+msg+'>')
+                True
+            self.remotestatus[node]=self.rsdict[self.remotestatuscode[node]]
+            if self.remotestatuscode[node] in self.remotestatuses_datataking:
                 self.remotestatus[node]='DATATAKING'
-            self.remoterunnr[node]=str(parts[1])
-            self.remotespillnr[node]=str(parts[2])
             self.update_gui_statuscounters()
-            if node=='RC':
-                if not oldstatus==self.remotestatus[node]:
+            if not oldstatus==self.remotestatus[node]:
+                self.Log('Status change for '+str(node)+': '+str(oldstatus)+' -> '+str(self.remotestatus[node]))
+                if node=='RC':
                     self.processrccommand(self.remotestatus[node])
         elif tit=='GUI_LOG':
             self.Log(str().join(['[',str(node),']: '].extend(parts)))
@@ -164,10 +201,13 @@ class H4GtkGui:
         if not self.gm.get_object('runstatuslabel').get_text()==self.remotestatus['RC']:
             self.gm.get_object('runstatuslabel').set_text(self.remotestatus['RC'])
             self.flash_widget(self.gm.get_object('runstatusbox'),'yellow')
+        self.gm.get_object('ro1label').set_text( str(' ').join(('Data readout unit 1:',self.remotestatus['RO1'])))
+        self.gm.get_object('ro2label').set_text( str(' ').join(('Data readout unit 2:',self.remotestatus['RO2'])))
+        self.gm.get_object('evtblabel').set_text(str(' ').join(('Event builder:',self.remotestatus['EVTB'])))
         self.gm.get_object('runnumberlabel').set_text(str().join(['Run number: ',str(self.status['runnumber'])]))
         self.gm.get_object('spillnumberlabel').set_text(str().join(['Spill number: ',str(self.status['spillnumber'])]))
-#        self.gm.get_object('evinrunlabel').set_text(str().join(['#events in run: ',str(self.status['evinrun'])]))
-#        self.gm.get_object('evinspilllabel').set_text(str().join(['#events in spill: ',str(self.status['evinspill'])]))
+        self.gm.get_object('evinrunlabel').set_text(str().join(['Total #events in run: ',str(self.status['evinrun'])]))
+        self.gm.get_object('evinspilllabel').set_text(str().join(['Nr. of events in spill ',str(self.status['lastbuiltspill']),': ',str(self.status['evinspill'])]))
         return True
     def set_sens(self,wids,value):
         for wid in wids:
@@ -297,62 +337,11 @@ class H4GtkGui:
         signal+='box'
         self.flash_widget(self.gm.get_object(signal),'orange')
 
-# CONFIRMATION_WINDOW
-    def askconfirmation(self,string,func,*args):
-        self.dialog=self.gm.get_object("dialog1")
-        self.dialog.set_position(gtk.WIN_POS_CENTER_ALWAYS)
-        self.gm.get_object('question').set_label(str(string))
-        self.dialog.show()
-        self.waitingonconfirm=True
-        self.confirmationoutput=False
-        gobject.idle_add(self.check_waiting_on_confirmation,func,*args)        
-    def check_waiting_on_confirmation(self,func,*args):
-        if self.waitingonconfirm==True:
-            return True
-        else:
-            if self.confirmationoutput==True:
-                func(*args)
-            return False
-    def on_cancelbutton_clicked(self,*args):
-        self.confirmationoutput=False
-        self.dialog.hide()
-        self.waitingonconfirm=False
-    def on_applybutton_clicked(self,*args):
-        self.confirmationoutput=True
-        self.dialog.hide()
-        self.waitingonconfirm=False
-
-# WAITING TRANSITION WINDOW
-    def waitfortransition(self,newstatus,newlocalstatus):
-        self.dialog2=self.gm.get_object("dialog2")
-        self.dialog2.set_position(gtk.WIN_POS_CENTER_ALWAYS)
-        self.gm.get_object('question2').set_label('Waiting for transition to '+str(newstatus))
-        self.dialog2.show()
-        self.forcetransition=False
-        self.waitingfortransition=True
-        gobject.idle_add(self.waitfortransition_helper,newstatus,newlocalstatus)
-    def waitfortransition_helper(self,newstatus,newlocalstatus):
-        if self.remotestatus['RC']==newstatus:
-            self.waitingfortransition=False
-        if self.waitingfortransition:
-            return True
-        else:
-            if self.forcetransition:
-                self.gotostatus(newlocalstatus)
-            self.forcetransition=False
-            return False
-    def on_forcelocaltransition_clicked(self,*args):
-        self.dialog2.hide()
-        self.forcetransition=True
-        self.waitingfortransition=False
-    def on_forcegoback_clicked(self,*args):
-        self.dialog2.hide()
-        self.waitingfortransition=False
 
 # EXEC ACTIONS
     def processrccommand(self,command):
-        rcstatus=self.remotestatus['RC']
-        if rc in ['START','INIT','INITIALIZED','BYE']:
+        rc=self.remotestatuscode['RC']
+        if rc in self.remotestatuses_stopped:
             if self.status['localstatus'] in ['RUNNING','PAUSED']:                
                 self.gotostatus('STOPPED')
             else:
@@ -360,7 +349,7 @@ class H4GtkGui:
         else:
             self.gotostatus('RUNNING')
     def createrun(self):
-        if self.remotestatus['RC']!='INITIALIZED':
+        if self.remotestatuscode['RC']!=self.remotestatus_betweenruns:
             return
         if self.status['localstatus']=='CREATED':
             self.gotostatus('INIT')
@@ -375,6 +364,8 @@ class H4GtkGui:
         self.confblock.r['run_comment']=''
         self.update_gui_confblock()
     def startrun(self):
+        if self.remotestatuscode['RC']!=self.remotestatus_betweenruns:
+            return
         self.get_gui_confblock()
         self.confblock.r['run_starttime']=str(datetime.utcnow().isoformat())
         self.confblock=self.confdb.add_into_db(self.confblock)
@@ -382,23 +373,43 @@ class H4GtkGui:
         self.update_gui_confblock()
         self.Log('Sending START for run '+str(self.confblock.r['run_number']))
         self.send_message(str(' ').join([str(self.gui_out_messages['startrun']),str(self.confblock.r['run_number']),str(self.confblock.t['run_type_description']),str(self.confblock.t['ped_frequency'])]))
-        self.waitfortransition('BEGINSPILL','RUNNING')
-    def pauserun(self):
+        message = 'Waiting for transition to '+str('|').join(self.remotestatuses_running)
+        self.mywaiter.reset()
+        self.mywaiter.set_layout(message,'Go back','Force transition')
+        self.mywaiter.set_condition(self.table_is_ok_and_remotestatus,[newx,newy,self.remotestatuses_running])
+        self.mywaiter.set_exit_function(self.gotostatus,['RUNNING'])
+        self.mywaiter.run()
+    def pauserun(self): # IMPL DEBUG
         if not self.status['localstatus']=='PAUSED':
             self.Log('Sending PAUSE for run '+str(self.confblock.r['run_number']))
             self.send_message(self.gui_out_messages['pauserun'])
-            self.waitfortransition('BEGINSPILL','PAUSED')
-            self.gotostatus('PAUSED')
+            self.mywaiter.reset()
+            self.mywaiter.set_layout(message,'Go back','Force transition')
+            self.mywaiter.set_condition(self.remstatus_is,[[self.remotestatus_betweenspills]])
+            self.mywaiter.set_exit_function(self.gotostatus,['PAUSED'])
+#            mywaiter.set_back_function(self.gotostatus,'PAUSED')
+            self.mywaiter.run()
         else:
             self.Log('Sending RESUME for run '+str(self.confblock.r['run_number']))
             self.send_message(self.gui_out_messages['resumerun'])
-            self.waitfortransition('CLEARED','RUNNING')
+            self.mywaiter.reset()
+            self.mywaiter.set_layout(message,'Go back','Force transition')
+            self.mywaiter.set_condition(self.remstatus_is,[[self.remotestatus_restartafterpause]])
+            self.mywaiter.set_exit_function(self.gotostatus,['RUNNING'])
+#            mywaiter.set_back_function(self.gotostatus,'RUNNING')
+            self.mywaiter.run()
+    def remstatus_is(self,whichstatus):
+        return (self.remotestatuscode['RC'] in whichstatus)
     def stoprun(self):
         self.Log('Sending STOP for run '+str(self.confblock.r['run_number']))
         self.send_message(self.gui_out_messages['stoprun'])
         self.gui_go_to_runnr(self.status['runnumber'])
         self.confblock.r['run_endtime']=str(datetime.utcnow().isoformat())
-        self.waitfortransition('INITIALIZED','STOPPED')
+        mywaiter.reset()
+        mywaiter.set_layout(message,'Go back','Force transition')
+        mywaiter.set_condition(self.remstatus_is,[[self.remotestatus_betweenruns]])
+        mywaiter.set_exit_function(self.gotostatus,['STOPPED'])
+        mywaiter.run()
     def closerun(self):
         self.get_gui_confblock()
         self.confblock=self.confdb.update_to_db(self.confblock)
@@ -406,16 +417,25 @@ class H4GtkGui:
 
 # PROCESS SIGNALS
     def on_buttonquit_clicked(self,*args):
-        gtk.main_quit()
+        self.mywaiter.reset()
+        self.mywaiter.set_layout('Do you want to quit the GUI?','Cancel','Yes')
+        self.mywaiter.set_exit_func(gtk.main_quit,[])
+        self.mywaiter.run()        
     def on_quitbuttonRC_clicked(self,*args):
         self.Log("Request to quit run controller from GUI user")
-        self.askconfirmation('Do you really want to quit the DAQ?',self.send_message,self.gui_out_messages['die'])
+#        self.askconfirmation('Do you really want to quit the DAQ?',self.send_message,self.gui_out_messages['die']) #IMPL
     def on_createbutton_clicked(self,*args):
         self.createrun()
     def on_startbutton_clicked(self,*args):
-        self.askconfirmation('Do you want to start?',self.startrun)
+        message = 'Do you want to start?'
+        self.mywaiter.reset()
+        self.mywaiter.set_layout(message,'Cancel','Start')
+        self.mywaiter.set_exit_func(self.startrun,[])
+        self.mywaiter.run()
+#        self.askconfirmation('Do you want to start?',self.startrun) #IMPL
     def on_pausebutton_clicked(self,*args):
-        self.askconfirmation('Do you want to pause?',self.pauserun)
+        return
+#        self.askconfirmation('Do you want to pause?',self.pauserun) #IMPL
     def on_stopbutton_clicked(self,*args):
         if self.status['localstatus']=='STOPPED':
             self.closerun()
@@ -423,12 +443,17 @@ class H4GtkGui:
         else:
             self.askconfirmation('Do you want to stop?',self.stoprun)
     def gui_go_to_runnr(self,newrunnr):
+        if not self.confdb.run_exists(newrunnr):
+            return False
         self.confblock=self.confdb.read_from_db(runnr=newrunnr)
         self.update_gui_confblock()
+        return True
     def on_runnumberspinbutton_value_changed(self,*args):
         newnr=int(self.gm.get_object('runnumberspinbutton').get_value())
         if newnr>=0:
-            self.gui_go_to_runnr(newnr)
+            isgood = self.gui_go_to_runnr(newnr)
+            if not isgood:
+                self.Log('Run %s does not exist' % str(newnr))
     def on_daqstringentry_changed(self,button):
         self.update_comboboxentry(button)
     def on_runtextbuffer_end_user_action(self,*args):
@@ -522,6 +547,95 @@ class H4GtkGui:
             self.set_label('pausebutton','PAUSE RUN')
             self.set_label('stopbutton','CLOSE RUN')
         self.status['localstatus']=status
+
+
+# TABLE POSITION HANDLING
+    def get_table_position(self):
+        # IMPL
+        #        return (x,y,status)
+        return (float(0),float(0),'STOPPED')
+    def set_table_position(self,newx,newy):
+        if self.get_table_position()==(newx,newy,'STOPPED'):
+            return
+        message='Waiting for table to move to '+str(newx)+' '+str(newy)
+        gobject.idle_add(self.generalwaitwindow,message,None,'Force ACK table moving',self.get_table_position(),(newx,newy,'STOPPED'))
+    def table_is_ok_and_remotestatus(self,newx,newy,newstatus,gotostatus):
+        return (self.get_table_position==(newx,newy,'STOPPED') and newstatus==self.remotestatuscode['RC'])
+
+    def on_waitbutton1_clicked(self,*args):
+        self.mywaiter.on_waitbutton1_clicked_(args)
+    def on_waitbutton2_clicked(self,*args):
+        self.mywaiter.on_waitbutton2_clicked_(args)
+
+
+
+class waiter:
+    def __init__(self,gm_):
+        self.reset()
+        self.gm=gm_
+        self.dialog=self.gm.get_object("WaitingWindow")
+        self.dialog.set_position(gtk.WIN_POS_CENTER_ALWAYS)
+    def reset(self):
+        self.forcewaitexit=False
+        self.waitingexit=True
+        self.exit_func = None
+        self.back_func = None
+        self.exit_func_args = []
+        self.back_func_args = []
+        self.condition = None
+    def on_waitbutton1_clicked_(self,*args):
+        self.dialog.hide()
+        self.waitingexit=False
+    def on_waitbutton2_clicked_(self,*args):
+        self.dialog.hide()
+        self.forcewaitexit=True
+    def set_layout(self,message,label1,label2):
+        self.gm.get_object('waitquestion').set_label(str(message))
+        if label1:
+            self.gm.get_object('waitbutton1').set_label(str(label1))
+            self.gm.get_object('waitbutton1').set_sensitive(True)
+        else:
+            self.gm.get_object('waitbutton1').set_label('')
+            self.gm.get_object('waitbutton1').set_sensitive(False)
+        if label2:
+            self.gm.get_object('waitbutton2').set_label(str(label2))
+            self.gm.get_object('waitbutton2').set_sensitive(True)
+        else:
+            self.gm.get_object('waitbutton2').set_label('')
+            self.gm.get_object('waitbutton2').set_sensitive(False)
+    def set_condition(self,func,args):
+        self.condition = func
+        self.conditionargs = args
+    def set_exit_func(self,func,args):
+        self.exit_func = func
+        self.exit_func_args = args
+    def set_back_func(self,func,args):
+        self.back_func = func
+        self.back_func_args = args
+    def run(self):
+        self.dialog.show()
+        gobject.idle_add(self.generalwaitwindow_helper)
+    def generalwaitwindow_helper(self):
+        isgood = self.forcewaitexit
+        if self.condition!=None:
+            isgood = (isgood or self.condition(*(self.condition_args)))
+        if isgood:
+            self.waitingexit=False
+        if self.waitingexit:
+            return True
+        else:
+            if isgood:
+                if self.exit_func!=None:
+                    self.exit_func(*(self.exit_func_args))
+            else:
+                if self.back_func!=None:
+                    self.back_func(*(self.back_func_args))
+            return False
+
+
+
+
+
 
 
 

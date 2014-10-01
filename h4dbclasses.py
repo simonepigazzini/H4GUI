@@ -276,3 +276,11 @@ class DataTakingConfigHandler:
             if len(line)>0 and line[0]:
                 res=int(line[0])
         return res
+
+    def run_exists(self,runnr):
+        self.db.cursor.execute('SELECT run_number FROM run WHERE run_number=%s',(str(int(runnr)),))
+        res = False
+        for line in self.db.cursor:
+            if len(line)>0 and line[0] and int(line[0])==runnr:
+                res=True
+        return res
