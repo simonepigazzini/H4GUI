@@ -14,7 +14,7 @@ class H4GtkGui:
 
         self.debug=False
 
-        self.pubsocket_bind_address='tcp://*:6888'
+        self.pubsocket_bind_address='tcp://*:5566'
 
         self.nodes=[
             ('RC','tcp://pcethtb2.cern.ch:6002'),
@@ -138,6 +138,7 @@ class H4GtkGui:
                 self.proc_message(node,message)
         return True
     def check_keepalive(self):
+        return False # IMPL DEBUG
         for node in self.sub.keys():
             if (self.keepalivecounter[node]==False):
                 self.set_alarm('Lost connection with '+str(node),1)
@@ -200,7 +201,7 @@ class H4GtkGui:
         self.status['spillnumber']=self.remotespillnr['RC']
         if not self.gm.get_object('runstatuslabel').get_text()==self.remotestatus['RC']:
             self.gm.get_object('runstatuslabel').set_text(self.remotestatus['RC'])
-            self.flash_widget(self.gm.get_object('runstatusbox'),'yellow')
+            self.flash_widget(self.gm.get_object('runstatusbox'),'green')
         self.gm.get_object('ro1label').set_text( str(' ').join(('Data readout unit 1:',self.remotestatus['RO1'])))
         self.gm.get_object('ro2label').set_text( str(' ').join(('Data readout unit 2:',self.remotestatus['RO2'])))
         self.gm.get_object('evtblabel').set_text(str(' ').join(('Event builder:',self.remotestatus['EVTB'])))
@@ -341,6 +342,10 @@ class H4GtkGui:
 # EXEC ACTIONS
     def processrccommand(self,command):
         rc=self.remotestatuscode['RC']
+        if rc==10: # IMPL DEBUG DEBUG DEBUG
+            print 'DEBUG: auto-send EB_SPILLCOMPL from GUI at the end of the spill'
+            self.Log('DEBUG: auto-send EB_SPILLCOMPL from GUI at the end of the spill')
+            self.send_message('EB_SPILLCOMPL')
         if rc in self.remotestatuses_stopped:
             if self.status['localstatus'] in ['RUNNING','PAUSED']:                
                 self.gotostatus('STOPPED')
@@ -567,6 +572,18 @@ class H4GtkGui:
     def on_waitbutton2_clicked(self,*args):
         self.mywaiter.on_waitbutton2_clicked_(args)
 
+    def generalinputwindow(self,label,func):
+        self.set_label('inputwindowlabel',label)
+        self.set_gtkentry(self.gm.get_object('inputwindowentry'),'')
+        self.gm.get_object('InputWindow').show()
+        self.inputwindowentryfunction=func
+    def on_inputwindowentry_activate(self,*args):
+        message = self.gm.get_object('inputwindowentry').get_text()
+        self.inputwindowentryfunction(message)
+    def on_inputwindowquit_clicked(self,*args):
+        self.gm.get_object('InputWindow').hide()
+    def on_dummyguibutton_clicked(self,*args):
+        self.generalinputwindow('Send command with DummyGUI',self.send_message)
 
 
 class waiter:

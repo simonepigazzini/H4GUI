@@ -10,7 +10,8 @@ class DbInterface:
 
     config = {
         'user': 'cmsdaq',
-        'password': getpass.getpass('DB password: '),
+        'password': 'cmsdaq_mysql???',
+#        'password': getpass.getpass('DB password: '),
         'host': '127.0.0.1',
         'database': 'rundb_v2',
         'raise_on_warnings': True
