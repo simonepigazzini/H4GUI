@@ -4,6 +4,8 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 import gobject
+import pygst
+import gst
 from datetime import datetime
 from zmq import *
 from h4dbclasses import *
@@ -12,7 +14,7 @@ class H4GtkGui:
 
     def configure(self):
 
-        self.debug=True
+        self.debug=False
 
         self.pubsocket_bind_address='tcp://*:5566'
 
@@ -23,6 +25,9 @@ class H4GtkGui:
             ('EVTB','tcp://localhost:6903'),
             ('table','tcp://cms-h4-01:6999')
             ]
+
+        self.keepalive={}
+#        self.keepalive['table']=True
 
         self.gui_out_messages={
             'startrun': 'GUI_STARTRUN',
@@ -87,6 +92,8 @@ class H4GtkGui:
                           'runstarttext','runstoptext','runtext','daqstringentry','pedfrequencyspinbutton',
                           'beamparticlebox','beamenergyentry','beamsigmaxentry','beamsigmayentry',
                           'beamintensityentry','beamtiltxentry','beamtiltyentry']
+        self.playlevel=0
+        self.global_veto_alarm=False
 
         self.gm = gtk.Builder()
         self.gm.add_from_file("H4GtkGui.glade")
@@ -105,8 +112,6 @@ class H4GtkGui:
 
         self.mywaiter = waiter(self.gm)
 
-        self.keepalive={}
-        self.keepalive['table']=True
 
         self.aliveblinkstatus=False
         gobject.timeout_add(1000,self.change_color_blinkingalive)
@@ -199,7 +204,8 @@ class H4GtkGui:
             self.flash_sps(str(parts[0]))
         elif tit==self.gui_in_messages['tablepos']:
             self.status['table_position']=(float(parts[0]),float(parts[1]),str(parts[2]))
-            self.checkalive['table']=True
+            if node in self.keep.keys():
+                self.keepalive['table']=True
 
 # RUN STATUS AND COUNTERS, GUI ELEMENTS SENSITIVITY AND MANIPULATION
     def update_gui_statuscounters(self):
@@ -299,18 +305,34 @@ class H4GtkGui:
     def Log(self,mytext):
         mybuffer=self.gm.get_object('rclogbuffer')
         mybuffer.insert(mybuffer.get_end_iter(),str(mytext)+'\n')
-    def set_alarm(self,msg='Error_Generic',level=1):        
-        self.alarms[msg]=level
+    def set_alarm(self,msg='Error_Generic',level=1):
+        if self.global_veto_alarm:
+            return
         if level==0:
             self.unset_alarm(msg)
-        elif msg not in self.alarms.keys() or self.alarms[msg]!=level:
-            self.Log('Setting alarm %d: '%(level,)+msg)
+            return
+        else:
+            setit=False
+            if msg not in self.alarms.keys():
+                setit=True
+            elif self.alarms[msg]!=level:
+                setit=True
+            if setit:
+                self.Log('Setting alarm %d: '%(level,)+msg)
+                if level>=2:
+                    self.bark(20)
+                elif level>=1:
+                    self.beep(2)
+        self.alarms[msg]=level
     def unset_alarm(self,msg):
         if msg in self.alarms.keys():
             self.Log('Clearing alarm: '+msg)
         self.alarms.pop(msg,None)
     def clear_alarms(self):
         self.alarms.clear()
+        self.barktimes=0
+        self.beeptimes=0
+        self.playlevel=0
     def check_alarm(self):
         if self.alarmblinkstatus==False:
             color=None
@@ -322,7 +344,7 @@ class H4GtkGui:
                 elif mylevel>=1:
                     color=gtk.gdk.color_parse('yellow')
             self.gm.get_object('alarmbox').modify_bg(gtk.STATE_NORMAL,color)
-            if mylevel>=2:
+            if mylevel>=1:
                 self.gm.get_object('MainWindow').modify_bg(gtk.STATE_NORMAL,color)
         else:
             self.gm.get_object('alarmbox').modify_bg(gtk.STATE_NORMAL,None)
@@ -601,7 +623,49 @@ class H4GtkGui:
         self.gm.get_object('InputWindow').hide()
     def on_dummyguibutton_clicked(self,*args):
         self.generalinputwindow('Send command with DummyGUI',self.send_message)
+    def on_clearalarmbutton_clicked(self,*args):
+        self.clear_alarms()
+    def on_vetoalarmbutton_toggled(self,*args):
+        self.global_veto_alarm=self.gm.get_object('vetoalarmbutton').get_value()
+        if self.global_veto_alarm:
+            self.clear_alarms()
 
+    def bark(self,times):
+        self.barktimes=3*times
+        gobject.timeout_add(600,self.bark_helper)
+    def bark_helper(self):
+        if self.playlevel>2:
+            return False
+        if self.barktimes<=0:
+            self.playlevel=0
+            return False
+        self.playlevel=2
+        if not self.barktimes%3==1:
+            soundcom = ('filesrc location=%s ! decodebin2 ! autoaudiosink') % \
+            '/usr/share/sounds/gnome/default/alerts/bark.ogg'
+            self.play = gst.parse_launch(soundcom)
+            self.play.set_state(gst.STATE_PLAYING)
+        self.barktimes-=1;
+        return True
+    def beep(self,times,freq=400):
+        self.beeptimes=2*times
+        soundcom = ('audiotestsrc freq=%d ! decodebin2 ! autoaudiosink') % freq
+        self.play = gst.parse_launch(soundcom)
+        self.playlevel=1
+        gobject.timeout_add(2000,self.beep_helper,self.play,self.beeptimes)
+    def beep_helper(self,p,beeptimes):
+        if self.playlevel>1:
+            return False
+        if self.beeptimes<=0:
+            self.playlevel=0
+            return False
+        if self.beeptimes%2==0:
+            p.set_state(gst.STATE_PLAYING)
+        else:
+            p.set_state(gst.STATE_PAUSED)
+        self.beeptimes-=1;
+        return True
+            
 
 class waiter:
     def __init__(self,gm_):

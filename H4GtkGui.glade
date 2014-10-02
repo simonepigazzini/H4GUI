@@ -86,7 +86,21 @@
               <object class="GtkTable" id="table4">
                 <property name="visible">True</property>
                 <property name="n_rows">2</property>
-                <property name="n_columns">3</property>
+                <property name="n_columns">4</property>
+                <child>
+                  <object class="GtkButton" id="dummyguibutton">
+                    <property name="label">Dummy GUI</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <signal name="clicked" handler="on_dummyguibutton_clicked"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">3</property>
+                    <property name="right_attach">4</property>
+                    <property name="bottom_attach">2</property>
+                  </packing>
+                </child>
                 <child>
                   <object class="GtkButton" id="quitbuttonRC">
                     <property name="label">Quit DAQ</property>
@@ -96,8 +110,8 @@
                     <signal name="clicked" handler="on_quitbuttonRC_clicked"/>
                   </object>
                   <packing>
-                    <property name="left_attach">1</property>
-                    <property name="right_attach">2</property>
+                    <property name="left_attach">2</property>
+                    <property name="right_attach">3</property>
                   </packing>
                 </child>
                 <child>
@@ -109,8 +123,8 @@
                     <signal name="clicked" handler="on_buttonquit_clicked"/>
                   </object>
                   <packing>
-                    <property name="left_attach">1</property>
-                    <property name="right_attach">2</property>
+                    <property name="left_attach">2</property>
+                    <property name="right_attach">3</property>
                     <property name="top_attach">1</property>
                     <property name="bottom_attach">2</property>
                   </packing>
@@ -122,6 +136,10 @@
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                   </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="right_attach">2</property>
+                  </packing>
                 </child>
                 <child>
                   <object class="GtkButton" id="killdaemonsbutton">
@@ -131,23 +149,33 @@
                     <property name="receives_default">True</property>
                   </object>
                   <packing>
+                    <property name="left_attach">1</property>
+                    <property name="right_attach">2</property>
                     <property name="top_attach">1</property>
                     <property name="bottom_attach">2</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkButton" id="dummyguibutton">
-                    <property name="label">Dummy GUI</property>
+                  <object class="GtkButton" id="clearalarmbutton">
+                    <property name="label">Clear alarms</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
-                    <signal name="clicked" handler="on_dummyguibutton_clicked"/>
+                    <signal name="clicked" handler="on_clearalarmbutton_clicked"/>
                   </object>
                   <packing>
-                    <property name="left_attach">2</property>
-                    <property name="right_attach">3</property>
+                    <property name="top_attach">1</property>
                     <property name="bottom_attach">2</property>
                   </packing>
+                </child>
+                <child>
+                  <object class="GtkToggleButton" id="vetoalarmbutton">
+                    <property name="label" translatable="yes">Inhibit alarms</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <signal name="toggled" handler="on_vetoalarmbutton_toggled"/>
+                  </object>
                 </child>
               </object>
               <packing>
