@@ -12,7 +12,7 @@ class H4GtkGui:
 
     def configure(self):
 
-        self.debug=False
+        self.debug=True
 
         self.pubsocket_bind_address='tcp://*:5566'
 
@@ -20,7 +20,8 @@ class H4GtkGui:
             ('RC','tcp://pcethtb2.cern.ch:6002'),
             ('RO1','tcp://localhost:6901'),
             ('RO2','tcp://localhost:6902'),
-            ('EVTB','tcp://localhost:6903')
+            ('EVTB','tcp://localhost:6903'),
+            ('table','tcp://cms-h4-01:6999')
             ]
 
         self.gui_out_messages={
@@ -33,7 +34,8 @@ class H4GtkGui:
         self.gui_in_messages={
             'status': 'STATUS',
             'log': 'GUI_LOG',
-            'error': 'GUI_ERROR'
+            'error': 'GUI_ERROR',
+            'tablepos': 'TABLE_IS'
             }
         self.rsdict={ #imported from H4DAQ/interface/Command.hpp 
             0:'START',
@@ -103,6 +105,9 @@ class H4GtkGui:
 
         self.mywaiter = waiter(self.gm)
 
+        self.keepalive={}
+        self.keepalive['table']=True
+
         self.aliveblinkstatus=False
         gobject.timeout_add(1000,self.change_color_blinkingalive)
         self.alarms={}
@@ -117,13 +122,11 @@ class H4GtkGui:
         self.context = Context()
         self.poller = Poller()
         self.sub={}
-        self.keepalivecounter={}
         for node,addr in self.nodes:
             self.sub[node] = self.context.socket(SUB)
             self.sub[node].connect(addr)
             self.sub[node].setsockopt(SUBSCRIBE,'')
             self.poller.register(self.sub[node],POLLIN)
-            self.keepalivecounter[node]=True
         self.pub = self.context.socket(PUB)
         self.pub.bind(self.pubsocket_bind_address)
         gobject.idle_add(self.poll_sockets)
@@ -134,17 +137,17 @@ class H4GtkGui:
         for node,sock in self.sub.iteritems():
             if (socks.get(sock)):
                 message = sock.recv()
-                self.keepalivecounter[node]=True
+                if node in self.keepalive.keys():
+                    self.keepalive[node]=True
                 self.proc_message(node,message)
         return True
     def check_keepalive(self):
-        return False # IMPL DEBUG
-        for node in self.sub.keys():
-            if (self.keepalivecounter[node]==False):
+        for node,val in self.keepalive.iteritems():
+            if not val:
                 self.set_alarm('Lost connection with '+str(node),1)
             else:
                 self.unset_alarm('Lost connection with '+str(node))
-            self.keepalivecounter[node]=False
+            self.keepalive[node]=False
         return True
     def send_message(self,msg,param='',forcereturn=None):
         mymsg=msg
@@ -194,6 +197,9 @@ class H4GtkGui:
             self.set_alarm(message,level)
         elif tit=='GUI_SPS':
             self.flash_sps(str(parts[0]))
+        elif tit==self.gui_in_messages['tablepos']:
+            self.status['table_position']=(float(parts[0]),float(parts[1]),str(parts[2]))
+            self.checkalive['table']=True
 
 # RUN STATUS AND COUNTERS, GUI ELEMENTS SENSITIVITY AND MANIPULATION
     def update_gui_statuscounters(self):
@@ -297,7 +303,11 @@ class H4GtkGui:
         self.alarms[msg]=level
         if level==0:
             self.unset_alarm(msg)
+        elif msg not in self.alarms.keys() or self.alarms[msg]!=level:
+            self.Log('Setting alarm %d: '%(level,)+msg)
     def unset_alarm(self,msg):
+        if msg in self.alarms.keys():
+            self.Log('Clearing alarm: '+msg)
         self.alarms.pop(msg,None)
     def clear_alarms(self):
         self.alarms.clear()
@@ -555,15 +565,22 @@ class H4GtkGui:
 
 
 # TABLE POSITION HANDLING
+    def table_position_is(self,pos):
+        return (self.get_table_position==pos)
     def get_table_position(self):
-        # IMPL
-        #        return (x,y,status)
-        return (float(0),float(0),'STOPPED')
+        return self.status['table_status']
     def set_table_position(self,newx,newy):
-        if self.get_table_position()==(newx,newy,'STOPPED'):
-            return
+        if self.get_table_position()[3]!='TAB_DONE':
+            self.Log('ERROR: trying to move table while table is not stopped')
+            return False
+        if self.status['table_status']==(newx,newy,'TAB_DONE'):
+            return True # nothing to do
+        self.send_message('SET_TABLE_POSITION %s %s' % (newx,newy,))
         message='Waiting for table to move to '+str(newx)+' '+str(newy)
-        gobject.idle_add(self.generalwaitwindow,message,None,'Force ACK table moving',self.get_table_position(),(newx,newy,'STOPPED'))
+        mywaiter.reset()
+        mywaiter.set_layout(message,None,'Force ACK table moving')
+        mywaiter.set_condition(self.get_table_position,[(newx,newy,'STOPPED')])
+        mywaiter.run()
     def table_is_ok_and_remotestatus(self,newx,newy,newstatus,gotostatus):
         return (self.get_table_position==(newx,newy,'STOPPED') and newstatus==self.remotestatuscode['RC'])
 
@@ -648,16 +665,6 @@ class waiter:
                 if self.back_func!=None:
                     self.back_func(*(self.back_func_args))
             return False
-
-
-
-
-
-
-
-
-
-
 
 # MAIN
 if __name__ == "__main__":
