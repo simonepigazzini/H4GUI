@@ -8,9 +8,11 @@ class DbInterface:
     cnx = None
     cursor = None
 
+    myfile = open('cmsdaq_mysql.passwd','r')
+    passwd = myfile.readline().replace('\n','')
     config = {
         'user': 'cmsdaq',
-        'password': 'cmsdaq_mysql???',
+        'password': passwd,
 #        'password': getpass.getpass('DB password: '),
         'host': '127.0.0.1',
         'database': 'rundb_v2',
