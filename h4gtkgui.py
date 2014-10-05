@@ -6,7 +6,7 @@ import gtk
 import gobject
 import pygst
 import gst
-from datetime import datetime
+import datetime
 from zmq import *
 from h4dbclasses import *
 
@@ -14,7 +14,8 @@ class H4GtkGui:
 
     def configure(self):
 
-        self.debug=False
+        self.debug=True
+        self.activatesounds=False
 
         self.pubsocket_bind_address='tcp://*:6787'
 
@@ -27,6 +28,7 @@ class H4GtkGui:
             ]
 
         self.keepalive={}
+        self.keepalive['RC']=True
 #        self.keepalive['table']=True
 
         self.gui_out_messages={
@@ -340,8 +342,9 @@ class H4GtkGui:
 
 # ALARMS
     def Log(self,mytext):
+        mytext_=str(' ').join((datetime.datetime.now().strftime('%d.%m.%y %H:%M:%S'),mytext))
         mybuffer=self.gm.get_object('rclogbuffer')
-        mybuffer.insert(mybuffer.get_end_iter(),str(mytext)+'\n')
+        mybuffer.insert(mybuffer.get_end_iter(),str(mytext_)+'\n')
     def set_alarm(self,msg='Error_Generic',level=1):
         if self.global_veto_alarm:
             return
@@ -357,9 +360,11 @@ class H4GtkGui:
             if setit:
                 self.Log('Setting alarm %d: '%(level,)+msg)
                 if level>=2:
-                    self.bark(20)
+                    if self.activatesounds:
+                        self.bark(20)
                 elif level>=1:
-                    self.beep(2)
+                    if self.activatesounds:
+                        self.beep(2)
         self.alarms[msg]=level
     def unset_alarm(self,msg):
         if msg in self.alarms.keys():
@@ -411,9 +416,10 @@ class H4GtkGui:
 # EXEC ACTIONS
     def processrccommand(self,command):
         rc=self.remotestatuscode['RC']
-        if rc==11: # IMPL DEBUG DEBUG DEBUG
-            self.Log('DEBUG: auto-send EB_SPILLCOMPL from GUI at the end of the spill')
-            self.send_message('EB_SPILLCOMPL')
+        print rc
+#        if rc==11: # IMPL DEBUG DEBUG DEBUG
+#            self.Log('DEBUG: auto-send EB_SPILLCOMPL from GUI at the end of the spill')
+#            self.send_message('EB_SPILLCOMPL')
         if rc in self.remotestatuses_stopped:
             if self.status['localstatus'] in ['RUNNING','PAUSED']:                
                 self.gotostatus('STOPPED')
@@ -446,7 +452,7 @@ class H4GtkGui:
                 self.Log('Node %s not ready for STARTRUN'%(str(node),))
                 return
         self.get_gui_confblock()
-        self.confblock.r['run_starttime']=str(datetime.utcnow().isoformat())
+        self.confblock.r['run_starttime']=str(datetime.datetime.utcnow().isoformat())
         self.confblock=self.confdb.add_into_db(self.confblock)
         self.update_gui_confblock()
         self.Log('Sending START for run '+str(self.confblock.r['run_number']))
@@ -485,7 +491,7 @@ class H4GtkGui:
         self.Log('Sending STOP for run '+str(self.confblock.r['run_number']))
         self.send_message(self.gui_out_messages['stoprun'])
         self.gui_go_to_runnr(self.status['runnumber'])
-        self.confblock.r['run_endtime']=str(datetime.utcnow().isoformat())
+        self.confblock.r['run_endtime']=str(datetime.datetime.utcnow().isoformat())
         mywaiter.reset()
         mywaiter.set_layout(message,'Go back','Force transition')
         mywaiter.set_condition(self.remstatus_is,[[self.remotestatus_betweenruns]])
