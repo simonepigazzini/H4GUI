@@ -42,7 +42,7 @@
           <object class="GtkButton" id="inputwindowquit">
             <property name="label" translatable="yes">Quit</property>
             <property name="visible">True</property>
-            <property name="can_focus">True</property>
+            <property name="can_focus">False</property>
             <property name="receives_default">True</property>
             <property name="use_action_appearance">False</property>
             <signal name="clicked" handler="on_inputwindowquit_clicked" swapped="no"/>
@@ -156,7 +156,7 @@
                   <object class="GtkButton" id="dummyguibutton">
                     <property name="label">Dummy GUI</property>
                     <property name="visible">True</property>
-                    <property name="can_focus">True</property>
+                    <property name="can_focus">False</property>
                     <property name="receives_default">True</property>
                     <property name="use_action_appearance">False</property>
                     <signal name="clicked" handler="on_dummyguibutton_clicked" swapped="no"/>
@@ -1610,7 +1610,7 @@
               <object class="GtkButton" id="waitbutton1">
                 <property name="label">waitbutton1</property>
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
+                <property name="can_focus">False</property>
                 <property name="receives_default">True</property>
                 <property name="use_action_appearance">False</property>
                 <signal name="clicked" handler="on_waitbutton1_clicked" swapped="no"/>
@@ -1625,7 +1625,7 @@
               <object class="GtkButton" id="waitbutton2">
                 <property name="label">waitbutton2</property>
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
+                <property name="can_focus">False</property>
                 <property name="receives_default">True</property>
                 <property name="use_action_appearance">False</property>
                 <signal name="clicked" handler="on_waitbutton2_clicked" swapped="no"/>
@@ -1649,6 +1649,7 @@
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">Question</property>
+            <property name="use_markup">True</property>
           </object>
           <packing>
             <property name="expand">True</property>

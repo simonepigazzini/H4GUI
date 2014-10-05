@@ -93,6 +93,7 @@ class H4GtkGui:
             self.remoteevinrun[node]=0
             self.remotelastspillbuilt[node]=0
             self.remoteevinlastspill[node]=0
+        self.remoteispaused=False
         self.allbuttons=['createbutton','startbutton','pausebutton','stopbutton']
         self.allrunblock=['runtypebutton','runnumberspinbutton','tablexspinbutton','tableyspinbutton',
                           'runstarttext','runstoptext','runtext','daqstringentry','pedfrequencyspinbutton',
@@ -194,6 +195,10 @@ class H4GtkGui:
                     self.remotelastspillbuilt[node]=int(parts[4])
                 if len(parts)>5:
                     self.remoteevinlastspill[node]=int(parts[5])
+                if len(parts)>6 and str(parts[6])=='PAUSED':
+                    self.remoteispaused=True
+                else:
+                    self.remoteispaused=False
             except ValueError:
                 self.Log('Impossible to interpret message: <'+msg+'>')
                 True
@@ -227,8 +232,8 @@ class H4GtkGui:
         self.status['evinrun']=self.remoteevinrun['RC']
         self.status['lastspillbuilt']=self.remotelastspillbuilt['RC']
         self.status['evinspill']=self.remoteevinlastspill['RC']
-        if not self.gm.get_object('runstatuslabel').get_text()==self.remotestatus['RC']:
-            self.gm.get_object('runstatuslabel').set_text(self.remotestatus['RC'])
+        if not self.gm.get_object('runstatuslabel').get_text().split(' ')[-1]==self.remotestatus['RC']:
+            self.gm.get_object('runstatuslabel').set_text(str(' ').join(('Run controller:',self.remotestatus['RC'])))
             self.flash_widget(self.gm.get_object('runstatusbox'),'green')
         self.gm.get_object('ro1label').set_text( str(' ').join(('Data readout unit 1:',self.remotestatus['RO1'])))
         self.gm.get_object('ro2label').set_text( str(' ').join(('Data readout unit 2:',self.remotestatus['RO2'])))
@@ -416,7 +421,12 @@ class H4GtkGui:
             else:
                 self.gotostatus('INIT')
         else:
-            self.gotostatus('RUNNING')
+            if not self.remoteispaused:
+                self.gotostatus('RUNNING')
+            else:
+                self.gotostatus('PAUSED')
+    def remotecheckpaused(self,whatiwant):
+        return (self.remoteispaused==whatiwant)
 
     def createrun(self):
         if self.status['localstatus']=='CREATED':
@@ -455,7 +465,7 @@ class H4GtkGui:
             self.send_message(self.gui_out_messages['pauserun'])
             self.mywaiter.reset()
             self.mywaiter.set_layout(message,'Go back','Force transition')
-            self.mywaiter.set_condition(self.remstatus_is,[[self.remotestatus_betweenspills]])
+            self.mywaiter.set_condition(self.remotecheckpaused,[True])
             self.mywaiter.set_exit_function(self.gotostatus,['PAUSED'])
             self.mywaiter.set_back_function(self.gotostatus,['RUNNING'])
             self.mywaiter.run()
@@ -464,7 +474,7 @@ class H4GtkGui:
             self.send_message(self.gui_out_messages['resumerun'])
             self.mywaiter.reset()
             self.mywaiter.set_layout(message,'Go back','Force transition')
-            self.mywaiter.set_condition(self.remstatus_is,[[self.remotestatuses_running]])
+            self.mywaiter.set_condition(self.remotecheckpaused,[False])
             self.mywaiter.set_exit_function(self.gotostatus,['RUNNING'])
             self.mywaiter.set_back_function(self.gotostatus,['PAUSED'])
             self.mywaiter.run()
