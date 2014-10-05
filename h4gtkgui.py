@@ -20,10 +20,10 @@ class H4GtkGui:
         self.pubsocket_bind_address='tcp://*:5566'
 
         self.nodes=[
-            ('RC','tcp://pcethtb2.cern.ch:6002')
-#            ('RO1','tcp://localhost:6901'),
+            ('RC','tcp://pcethtb2.cern.ch:6002'),
+            ('RO1','tcp://pcethtb1.cern.ch:6002'),
 #            ('RO2','tcp://localhost:6902'),
-#            ('EVTB','tcp://localhost:6903'),
+            ('EVTB','tcp://pcethtb2.cern.ch:6502'),
 #            ('table','tcp://cms-h4-01:6999')
             ]
 
@@ -446,9 +446,10 @@ class H4GtkGui:
 
     def startrun(self):
         for node,val in self.remotestatuscode.iteritems():
-            if val!=self.remotestatus_betweenruns:
-                self.Log('Node %s not ready for STARTRUN'%(str(node),))
-                return
+            if node in ['RC','RO1','RO2','EVTB']:
+                if val!=self.remotestatus_betweenruns:
+                    self.Log('Node %s not ready for STARTRUN'%(str(node),))
+                    return
         self.get_gui_confblock()
         self.status['evinrun']=0
         self.localspilldb.clear()
