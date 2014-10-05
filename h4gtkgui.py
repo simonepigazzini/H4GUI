@@ -345,6 +345,9 @@ class H4GtkGui:
         mytext_=str(' ').join((datetime.datetime.now().strftime('%d.%m.%y %H:%M:%S'),mytext))
         mybuffer=self.gm.get_object('rclogbuffer')
         mybuffer.insert(mybuffer.get_end_iter(),str(mytext_)+'\n')
+    def on_rclogview_size_allocate(self,*args):
+        adj=self.gm.get_object('scrolledwindow3').get_vadjustment()
+        adj.set_value(adj.get_upper()-adj.get_page_size()) 
     def set_alarm(self,msg='Error_Generic',level=1):
         if self.global_veto_alarm:
             return
