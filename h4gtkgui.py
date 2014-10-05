@@ -92,7 +92,6 @@ class H4GtkGui:
             self.remotespillnr[node]=0
             self.remoteevinspill[node]=0
         self.localspilldb={}
-        self.remoteevinrun=0
         self.remoteispaused=False
         self.allbuttons=['createbutton','startbutton','pausebutton','stopbutton']
         self.allrunblock=['runtypebutton','runnumberspinbutton','tablexspinbutton','tableyspinbutton',
@@ -199,8 +198,8 @@ class H4GtkGui:
                 self.Log('Impossible to interpret message: <'+msg+'>')
                 True
             if node=='RC':
-                self.localspilldb[self.remotespillnr[node]]=self.remoteevinspill[node]
-                self.remoteevinrun = sum(self.localspilldb.values())
+                if self.remotestatuscode[node]>=5 and self.remotestatuscode[node]<=11:
+                    self.localspilldb[self.remotespillnr[node]]=self.remoteevinspill[node]
             self.remotestatus[node]=self.rsdict[self.remotestatuscode[node]]
             if self.remotestatuscode[node] in self.remotestatuses_datataking:
                 self.remotestatus[node]='DATATAKING'
@@ -228,7 +227,7 @@ class H4GtkGui:
     def update_gui_statuscounters(self):
         self.status['runnumber']=self.remoterunnr['RC']
         self.status['spillnumber']=self.remotespillnr['RC']
-        self.status['evinrun']=self.remoteevinrun
+        self.status['evinrun']=sum(self.localspilldb.values())
         self.status['evinspill']=self.remoteevinspill['RC']
         if not self.gm.get_object('runstatuslabel').get_text().split(' ')[-1]==self.remotestatus['RC']:
             self.gm.get_object('runstatuslabel').set_text(str(' ').join(('Run controller:',self.remotestatus['RC'])))
@@ -451,20 +450,22 @@ class H4GtkGui:
                 self.Log('Node %s not ready for STARTRUN'%(str(node),))
                 return
         self.get_gui_confblock()
+        self.status['evinrun']=0
+        self.localspilldb.clear()
         self.confblock.r['run_starttime']=str(datetime.datetime.utcnow().isoformat())
         self.confblock=self.confdb.add_into_db(self.confblock)
         self.update_gui_confblock()
-        self.Log('Sending START for run '+str(self.confblock.r['run_number']))
-        self.send_message(str(' ').join([str(self.gui_out_messages['startrun']),str(self.confblock.r['run_number']),str(self.confblock.t['run_type_description']),str(self.confblock.t['ped_frequency'])]))
         message = 'Waiting for transition to '+str('|').join(str(x) for x in self.remotestatuses_running)
+        self.Log('Sending START for run '+str(self.confblock.r['run_number'])) # DEBUG FIX LOGIC IMPL (prima la tavola, poi startrun)
+        self.send_message(str(' ').join([str(self.gui_out_messages['startrun']),str(self.confblock.r['run_number']),str(self.confblock.t['run_type_description']),str(self.confblock.t['ped_frequency'])]))
         self.mywaiter.reset()
         self.mywaiter.set_layout(message,'Go back','Force transition')
         self.mywaiter.set_condition(self.table_is_ok_and_remotestatus,[self.confblock.r['table_horizontal_position'],self.confblock.r['table_vertical_position'],self.remotestatuses_running])
         self.mywaiter.set_exit_func(self.gotostatus,['RUNNING'])
         self.mywaiter.run()
-
+    
     def pauserun(self):
-        if not self.status['localstatus']=='RUNNING':
+        if self.status['localstatus']=='RUNNING':
             self.Log('Sending PAUSE for run '+str(self.confblock.r['run_number']))
             self.send_message(self.gui_out_messages['pauserun'])
             self.mywaiter.reset()
@@ -475,7 +476,7 @@ class H4GtkGui:
             self.mywaiter.run()
         else:
             self.Log('Sending RESUME for run '+str(self.confblock.r['run_number']))
-            self.send_message(self.gui_out_messages['resumerun'])
+            self.send_message(self.gui_out_messages['restartrun'])
             self.mywaiter.reset()
             self.mywaiter.set_layout(message,'Go back','Force transition')
             self.mywaiter.set_condition(self.remotecheckpaused,[False])
@@ -595,7 +596,7 @@ class H4GtkGui:
 
 # FSM
     def gotostatus(self,status):
-        self.Log(str().join(['Local status:',self.status['localstatus'],'->',status]))
+#        self.Log(str().join(['Local status:',self.status['localstatus'],'->',status]))
         self.status['localstatus']=status
         if status=='INIT':
             self.confblock=self.confdb.read_from_db(runnr=self.confdb.get_highest_run_number())
@@ -804,6 +805,7 @@ class waiter:
             else:
                 if self.back_func!=None:
                     self.back_func(*(self.back_func_args))
+            self.dialog.hide()
             return False
 
 # MAIN
