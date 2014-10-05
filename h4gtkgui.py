@@ -456,21 +456,20 @@ class H4GtkGui:
         self.confblock.r['run_starttime']=str(datetime.datetime.utcnow().isoformat())
         self.confblock=self.confdb.add_into_db(self.confblock)
         self.update_gui_confblock()
-        message = 'Waiting for transition to '+str('|').join(str(x) for x in self.remotestatuses_running)
-        self.Log('Sending START for run '+str(self.confblock.r['run_number'])) # DEBUG FIX LOGIC IMPL (prima la tavola, poi startrun)
-        self.send_message(str(' ').join([str(self.gui_out_messages['startrun']),str(self.confblock.r['run_number']),str(self.confblock.t['run_type_description']),str(self.confblock.t['ped_frequency'])]))
+        self.Log('Sending START for run '+str(self.confblock.r['run_number']))
+        self.send_message(str(' ').join([str(self.gui_out_messages['startrun']),str(self.confblock.r['run_number']),str(self.confblock.t['run_type_description']),str(self.confblock.t['ped_frequency'])]))        
         self.mywaiter.reset()
-        self.mywaiter.set_layout(message,'Go back','Force transition')
-        self.mywaiter.set_condition(self.table_is_ok_and_remotestatus,[self.confblock.r['table_horizontal_position'],self.confblock.r['table_vertical_position'],self.remotestatuses_running])
+        self.mywaiter.set_layout('Waiting for transition to running status','Go back','Force transition')
+        self.mywaiter.set_condition(self.remstatus_is,[self.remotestatuses_running])
         self.mywaiter.set_exit_func(self.gotostatus,['RUNNING'])
         self.mywaiter.run()
-    
+ 
     def pauserun(self):
         if self.status['localstatus']=='RUNNING':
             self.Log('Sending PAUSE for run '+str(self.confblock.r['run_number']))
             self.send_message(self.gui_out_messages['pauserun'])
             self.mywaiter.reset()
-            self.mywaiter.set_layout(message,'Go back','Force transition')
+            self.mywaiter.set_layout('Do you want to pause?','Go back','Force transition')
             self.mywaiter.set_condition(self.remotecheckpaused,[True])
             self.mywaiter.set_exit_func(self.gotostatus,['PAUSED'])
             self.mywaiter.set_back_func(self.gotostatus,['RUNNING'])
@@ -479,7 +478,7 @@ class H4GtkGui:
             self.Log('Sending RESUME for run '+str(self.confblock.r['run_number']))
             self.send_message(self.gui_out_messages['restartrun'])
             self.mywaiter.reset()
-            self.mywaiter.set_layout(message,'Go back','Force transition')
+            self.mywaiter.set_layout('Do you want to resume?','Go back','Force transition')
             self.mywaiter.set_condition(self.remotecheckpaused,[False])
             self.mywaiter.set_exit_func(self.gotostatus,['RUNNING'])
             self.mywaiter.set_back_func(self.gotostatus,['PAUSED'])
@@ -520,10 +519,13 @@ class H4GtkGui:
         self.createrun()
     def on_startbutton_clicked(self,*args):
         message = 'Do you want to start?'
+        if not self.table_is_ok(self.confblock.r['table_horizontal_position'],self.confblock.r['table_vertical_position']):
+            message+=' <b>TABLE WILL BE MOVED TO X=%s, Y=%s</b>'%(str(self.confblock.r['table_horizontal_position']),str(self.confblock.r['table_vertical_position']),)
         self.mywaiter.reset()
         self.mywaiter.set_layout(message,'Cancel','Start',color='green')
-        self.mywaiter.set_exit_func(self.startrun,[])
+        self.mywaiter.set_exit_func(self.set_table_position,[self.confblock.r['table_horizontal_position'],self.confblock.r['table_vertical_position'],self.startrun])
         self.mywaiter.run()
+
     def on_pausebutton_clicked(self,*args):
         if self.status['localstatus']=='RUNNING':
             message = 'Do you want to pause?'
@@ -657,22 +659,22 @@ class H4GtkGui:
 # TABLE POSITION HANDLING
     def get_table_position(self):
         return self.status['table_status']
-    def set_table_position(self,newx,newy):
-        if self.get_table_position()[3]!='TAB_DONE':
+    def set_table_position(self,newx,newy,exitfunc=None):
+        if self.get_table_position()[2]!='TAB_DONE':
             self.Log('ERROR: trying to move table while table is not stopped')
             return False
-        if self.status['table_status']==(newx,newy,'TAB_DONE'):
-            return True # nothing to do
-        self.send_message('SET_TABLE_POSITION %s %s' % (newx,newy,))
+        if self.status['table_status']!=(newx,newy,'TAB_DONE'):
+            self.send_message('SET_TABLE_POSITION %s %s' % (newx,newy,))
         message='Waiting for table to move to '+str(newx)+' '+str(newy)
         self.mywaiter.reset()
         self.mywaiter.set_layout(message,None,'Force ACK table moving')
-        self.mywaiter.set_condition(self.get_table_position,[(newx,newy,'STOPPED')])
+        self.mywaiter.set_condition(self.table_is_ok,[newx,newy])
+        if exitfunc:
+            self.mywaiter.set_exit_func(exitfunc,[])
         self.mywaiter.run()
-    def table_is_ok_and_remotestatus(self,newx,newy,remstatuses):
-        if self.get_table_position==(newx,newy,'STOPPED'):
-            if self.remotestatuscode['RC'] in remstatuses:
-                return True
+    def table_is_ok(self,newx,newy):
+        if self.get_table_position()==(newx,newy,'TAB_DONE'):
+            return True
         return False
 
 
