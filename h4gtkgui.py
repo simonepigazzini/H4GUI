@@ -19,11 +19,11 @@ class H4GtkGui:
         self.pubsocket_bind_address='tcp://*:6787'
 
         self.nodes=[
-            ('RC','tcp://pcethtb2.cern.ch:6002'),
-            ('RO1','tcp://localhost:6901'),
-            ('RO2','tcp://localhost:6902'),
-            ('EVTB','tcp://localhost:6903'),
-            ('table','tcp://cms-h4-01:6999')
+            ('RC','tcp://pcethtb2.cern.ch:6002')
+#            ('RO1','tcp://localhost:6901'),
+#            ('RO2','tcp://localhost:6902'),
+#            ('EVTB','tcp://localhost:6903'),
+#            ('table','tcp://cms-h4-01:6999')
             ]
 
         self.keepalive={}
@@ -76,6 +76,7 @@ class H4GtkGui:
             'spillnumber': 0,
             'evinrun': 0,
             'evinspill': 0,
+            'table_status': (0,0,'TAB_DONE')
             }
         self.remotestatus={}
         self.remotestatuscode={}
@@ -230,9 +231,12 @@ class H4GtkGui:
         if not self.gm.get_object('runstatuslabel').get_text().split(' ')[-1]==self.remotestatus['RC']:
             self.gm.get_object('runstatuslabel').set_text(str(' ').join(('Run controller:',self.remotestatus['RC'])))
             self.flash_widget(self.gm.get_object('runstatusbox'),'green')
-        self.gm.get_object('ro1label').set_text( str(' ').join(('Data readout unit 1:',self.remotestatus['RO1'])))
-        self.gm.get_object('ro2label').set_text( str(' ').join(('Data readout unit 2:',self.remotestatus['RO2'])))
-        self.gm.get_object('evtblabel').set_text(str(' ').join(('Event builder:',self.remotestatus['EVTB'])))
+        if 'RO1' in [x[0] for x in self.nodes]:
+            self.gm.get_object('ro1label').set_text( str(' ').join(('Data readout unit 1:',self.remotestatus['RO1'])))
+        if 'RO2' in [x[0] for x in self.nodes]:
+            self.gm.get_object('ro2label').set_text( str(' ').join(('Data readout unit 2:',self.remotestatus['RO2'])))
+        if 'EVTB' in [x[0] for x in self.nodes]:
+            self.gm.get_object('evtblabel').set_text(str(' ').join(('Event builder:',self.remotestatus['EVTB'])))
         self.gm.get_object('runnumberlabel').set_text(str().join(['Run number: ',str(self.status['runnumber'])]))
         self.gm.get_object('spillnumberlabel').set_text(str().join(['Spill number: ',str(self.status['spillnumber'])]))
         self.gm.get_object('evinrunlabel').set_text(str().join(['Total #events in run: ',str(self.status['evinrun'])]))
@@ -447,11 +451,11 @@ class H4GtkGui:
         self.update_gui_confblock()
         self.Log('Sending START for run '+str(self.confblock.r['run_number']))
         self.send_message(str(' ').join([str(self.gui_out_messages['startrun']),str(self.confblock.r['run_number']),str(self.confblock.t['run_type_description']),str(self.confblock.t['ped_frequency'])]))
-        message = 'Waiting for transition to '+str('|').join(self.remotestatuses_running)
+        message = 'Waiting for transition to '+str('|').join(str(x) for x in self.remotestatuses_running)
         self.mywaiter.reset()
         self.mywaiter.set_layout(message,'Go back','Force transition')
-        self.mywaiter.set_condition(self.table_is_ok_and_remotestatus,[newx,newy,self.remotestatuses_running])
-        self.mywaiter.set_exit_function(self.gotostatus,['RUNNING'])
+        self.mywaiter.set_condition(self.table_is_ok_and_remotestatus,[self.confblock.r['table_horizontal_position'],self.confblock.r['table_vertical_position'],self.remotestatuses_running])
+        self.mywaiter.set_exit_func(self.gotostatus,['RUNNING'])
         self.mywaiter.run()
 
     def pauserun(self):
@@ -461,8 +465,8 @@ class H4GtkGui:
             self.mywaiter.reset()
             self.mywaiter.set_layout(message,'Go back','Force transition')
             self.mywaiter.set_condition(self.remotecheckpaused,[True])
-            self.mywaiter.set_exit_function(self.gotostatus,['PAUSED'])
-            self.mywaiter.set_back_function(self.gotostatus,['RUNNING'])
+            self.mywaiter.set_exit_func(self.gotostatus,['PAUSED'])
+            self.mywaiter.set_back_func(self.gotostatus,['RUNNING'])
             self.mywaiter.run()
         else:
             self.Log('Sending RESUME for run '+str(self.confblock.r['run_number']))
@@ -470,8 +474,8 @@ class H4GtkGui:
             self.mywaiter.reset()
             self.mywaiter.set_layout(message,'Go back','Force transition')
             self.mywaiter.set_condition(self.remotecheckpaused,[False])
-            self.mywaiter.set_exit_function(self.gotostatus,['RUNNING'])
-            self.mywaiter.set_back_function(self.gotostatus,['PAUSED'])
+            self.mywaiter.set_exit_func(self.gotostatus,['RUNNING'])
+            self.mywaiter.set_back_func(self.gotostatus,['PAUSED'])
             self.mywaiter.run()
 
     def remstatus_is(self,whichstatus):
@@ -485,7 +489,7 @@ class H4GtkGui:
         mywaiter.reset()
         mywaiter.set_layout(message,'Go back','Force transition')
         mywaiter.set_condition(self.remstatus_is,[[self.remotestatus_betweenruns]])
-        mywaiter.set_exit_function(self.gotostatus,['STOPPED'])
+        mywaiter.set_exit_func(self.gotostatus,['STOPPED'])
         mywaiter.run()
 
     def closerun(self):
@@ -783,7 +787,7 @@ class waiter:
     def generalwaitwindow_helper(self):
         isgood = self.forcewaitexit
         if self.condition!=None:
-            isgood = (isgood or self.condition(*(self.condition_args)))
+            isgood = (isgood or self.condition(*(self.conditionargs)))
         if isgood:
             self.waitingexit=False
         if self.waitingexit:
