@@ -14,10 +14,10 @@ class H4GtkGui:
 
     def configure(self):
 
-        self.debug=True
+        self.debug=False
         self.activatesounds=False
 
-        self.pubsocket_bind_address='tcp://*:6787'
+        self.pubsocket_bind_address='tcp://*:5566'
 
         self.nodes=[
             ('RC','tcp://pcethtb2.cern.ch:6002')
@@ -419,12 +419,8 @@ class H4GtkGui:
 # EXEC ACTIONS
     def processrccommand(self,command):
         rc=self.remotestatuscode['RC']
-        print rc
-#        if rc==11: # IMPL DEBUG DEBUG DEBUG
-#            self.Log('DEBUG: auto-send EB_SPILLCOMPL from GUI at the end of the spill')
-#            self.send_message('EB_SPILLCOMPL')
         if rc in self.remotestatuses_stopped:
-            if self.status['localstatus'] in ['RUNNING','PAUSED']:                
+            if self.status['localstatus'] in ['RUNNING','PAUSED']:
                 self.gotostatus('STOPPED')
             else:
                 self.gotostatus('INIT')
@@ -495,11 +491,11 @@ class H4GtkGui:
         self.send_message(self.gui_out_messages['stoprun'])
         self.gui_go_to_runnr(self.status['runnumber'])
         self.confblock.r['run_endtime']=str(datetime.datetime.utcnow().isoformat())
-        mywaiter.reset()
-        mywaiter.set_layout(message,'Go back','Force transition')
-        mywaiter.set_condition(self.remstatus_is,[[self.remotestatus_betweenruns]])
-        mywaiter.set_exit_func(self.gotostatus,['STOPPED'])
-        mywaiter.run()
+        self.mywaiter.reset()
+        self.mywaiter.set_layout('Waiting for run to stop','Go back','Force transition')
+        self.mywaiter.set_condition(self.remstatus_is,[[self.remotestatus_betweenruns]])
+        self.mywaiter.set_exit_func(self.gotostatus,['STOPPED'])
+        self.mywaiter.run()
 
     def closerun(self):
         self.get_gui_confblock()
@@ -540,7 +536,7 @@ class H4GtkGui:
             self.closerun()
         else:
             self.mywaiter.reset()
-            self.mywaiter.set_layout(message,'Cancel','Yes',color='orange')
+            self.mywaiter.set_layout('Do you want to stop?','Cancel','Yes',color='orange')
             self.mywaiter.set_exit_func(self.stoprun,[])
             self.mywaiter.run()
     def gui_go_to_runnr(self,newrunnr):
@@ -599,7 +595,7 @@ class H4GtkGui:
 
 # FSM
     def gotostatus(self,status):
-#        self.Log(str().join(['Local status:',self.status['localstatus'],'->',status]))
+        self.Log(str().join(['Local status:',self.status['localstatus'],'->',status]))
         self.status['localstatus']=status
         if status=='INIT':
             self.confblock=self.confdb.read_from_db(runnr=self.confdb.get_highest_run_number())
@@ -624,7 +620,7 @@ class H4GtkGui:
             self.set_label('pausebutton','PAUSE RUN')
             self.set_label('stopbutton','STOP RUN')
             self.gm.get_object('runnumberspinbutton').set_visibility(False)
-        elif status=='STARTED':
+        elif status=='RUNNING':
             self.set_sens(self.allbuttons,False)
             self.set_sens(self.allrunblock,False)
             self.set_sens(['runnumberspinbutton'],True)
@@ -667,10 +663,10 @@ class H4GtkGui:
             return True # nothing to do
         self.send_message('SET_TABLE_POSITION %s %s' % (newx,newy,))
         message='Waiting for table to move to '+str(newx)+' '+str(newy)
-        mywaiter.reset()
-        mywaiter.set_layout(message,None,'Force ACK table moving')
-        mywaiter.set_condition(self.get_table_position,[(newx,newy,'STOPPED')])
-        mywaiter.run()
+        self.mywaiter.reset()
+        self.mywaiter.set_layout(message,None,'Force ACK table moving')
+        self.mywaiter.set_condition(self.get_table_position,[(newx,newy,'STOPPED')])
+        self.mywaiter.run()
     def table_is_ok_and_remotestatus(self,newx,newy,remstatuses):
         if self.get_table_position==(newx,newy,'STOPPED'):
             if self.remotestatuscode['RC'] in remstatuses:
