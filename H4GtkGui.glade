@@ -278,7 +278,7 @@
                     <property name="label_xalign">0</property>
                     <property name="shadow_type">none</property>
                     <child>
-                      <object class="GtkViewport" id="viewport1">
+                      <object class="GtkViewport" id="viewport2">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="resize_mode">queue</property>
@@ -493,7 +493,7 @@
                                         <property name="can_focus">False</property>
                                         <property name="top_padding">5</property>
                                         <child>
-                                          <object class="GtkScrolledWindow" id="scrolledwindow2">
+                                          <object class="GtkScrolledWindow" id="scrolledwindow3">
                                             <property name="height_request">200</property>
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
@@ -656,7 +656,7 @@
                                 <property name="can_focus">False</property>
                                 <property name="left_padding">12</property>
                                 <child>
-                                  <object class="GtkViewport" id="viewport2">
+                                  <object class="GtkViewport" id="viewport4">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
                                     <property name="resize_mode">queue</property>
@@ -816,6 +816,7 @@
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">True</property>
                                                         <property name="invisible_char">●</property>
+                                                        <property name="invisible_char_set">True</property>
                                                         <property name="numeric">True</property>
                                                         <signal name="value-changed" handler="on_runnumberspinbutton_value_changed" swapped="no"/>
                                                       </object>
@@ -854,6 +855,7 @@
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">True</property>
                                                         <property name="invisible_char">●</property>
+                                                        <property name="invisible_char_set">True</property>
                                                         <property name="digits">1</property>
                                                         <property name="numeric">True</property>
                                                       </object>
@@ -892,6 +894,7 @@
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">True</property>
                                                         <property name="invisible_char">●</property>
+                                                        <property name="invisible_char_set">True</property>
                                                         <property name="digits">1</property>
                                                         <property name="numeric">True</property>
                                                       </object>
@@ -932,6 +935,7 @@
                                                         <property name="can_focus">True</property>
                                                         <property name="invisible_char">●</property>
                                                         <property name="text" translatable="yes">-1</property>
+                                                        <property name="invisible_char_set">True</property>
                                                       </object>
                                                       <packing>
                                                         <property name="expand">True</property>
@@ -993,6 +997,7 @@
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="invisible_char">●</property>
+                                                <property name="invisible_char_set">True</property>
                                               </object>
                                             </child>
                                           </object>
@@ -1028,6 +1033,7 @@
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="invisible_char">●</property>
+                                                <property name="invisible_char_set">True</property>
                                               </object>
                                             </child>
                                           </object>
@@ -1063,7 +1069,7 @@
                                                 <property name="can_focus">False</property>
                                                 <property name="left_padding">12</property>
                                                 <child>
-                                                  <object class="GtkScrolledWindow" id="scrolledwindow3">
+                                                  <object class="GtkScrolledWindow" id="scrolledwindow4">
                                                     <property name="visible">True</property>
                                                     <property name="can_focus">True</property>
                                                     <property name="hscrollbar_policy">automatic</property>
@@ -1116,6 +1122,7 @@
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">True</property>
                                                         <property name="invisible_char">●</property>
+                                                        <property name="invisible_char_set">True</property>
                                                       </object>
                                                       <packing>
                                                         <property name="expand">True</property>
@@ -1161,6 +1168,7 @@
                                                             <property name="visible">True</property>
                                                             <property name="can_focus">True</property>
                                                             <property name="invisible_char">●</property>
+                                                            <property name="invisible_char_set">True</property>
                                                             <property name="numeric">True</property>
                                                             </object>
                                                             <packing>
@@ -1268,6 +1276,7 @@
                                                             <property name="visible">True</property>
                                                             <property name="can_focus">True</property>
                                                             <property name="invisible_char">●</property>
+                                                            <property name="invisible_char_set">True</property>
                                                           </object>
                                                           <packing>
                                                             <property name="top_attach">1</property>
@@ -1279,6 +1288,7 @@
                                                             <property name="visible">True</property>
                                                             <property name="can_focus">True</property>
                                                             <property name="invisible_char">●</property>
+                                                            <property name="invisible_char_set">True</property>
                                                           </object>
                                                           <packing>
                                                             <property name="left_attach">1</property>
@@ -1292,6 +1302,7 @@
                                                             <property name="visible">True</property>
                                                             <property name="can_focus">True</property>
                                                             <property name="invisible_char">●</property>
+                                                            <property name="invisible_char_set">True</property>
                                                           </object>
                                                           <packing>
                                                             <property name="left_attach">2</property>
@@ -1305,6 +1316,7 @@
                                                             <property name="visible">True</property>
                                                             <property name="can_focus">True</property>
                                                             <property name="invisible_char">●</property>
+                                                            <property name="invisible_char_set">True</property>
                                                           </object>
                                                           <packing>
                                                             <property name="top_attach">3</property>
@@ -1316,6 +1328,7 @@
                                                             <property name="visible">True</property>
                                                             <property name="can_focus">True</property>
                                                             <property name="invisible_char">●</property>
+                                                            <property name="invisible_char_set">True</property>
                                                           </object>
                                                           <packing>
                                                             <property name="left_attach">1</property>
@@ -1329,6 +1342,7 @@
                                                             <property name="visible">True</property>
                                                             <property name="can_focus">True</property>
                                                             <property name="invisible_char">●</property>
+                                                            <property name="invisible_char_set">True</property>
                                                           </object>
                                                           <packing>
                                                             <property name="left_attach">2</property>
@@ -1398,7 +1412,7 @@
                 </child>
               </object>
               <packing>
-                <property name="expand">False</property>
+                <property name="expand">True</property>
                 <property name="fill">True</property>
                 <property name="position">0</property>
               </packing>

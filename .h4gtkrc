@@ -1,0 +1,7 @@
+#To set the font
+style "Sans"
+{
+font_name = "Sans 8"
+}
+widget_class "*" style "Sans"
+gtk-font-name = "Sans 8"
