@@ -100,6 +100,7 @@ class H4GtkGui:
                           'beamintensityentry','beamtiltxentry','beamtiltyentry']
         self.playlevel=0
         self.global_veto_alarm=False
+        self.autostop_max_events=-1
 
         gtk.rc_parse('.h4gtkrc')
         self.gm = gtk.Builder()
@@ -742,7 +743,22 @@ class H4GtkGui:
         self.mywaiter.on_waitbutton1_clicked_(args)
     def on_waitbutton2_clicked(self,*args):
         self.mywaiter.on_waitbutton2_clicked_(args)
+
+# PLOT DISPLAY WINDOW
+    def on_eventbox_image_button_press_event(self,mybox,*args):
+        self.show_plot_display(self.imagenames.get(mybox.get_child().get_name(),None))
+    def show_plot_display(self,imagefile=None):
+        self.gm.get_object('imagelargedisplay').set_from_file(imagefile)
+        self.gm.get_object('PlotDisplayWindow').show()
+    def on_imageeventbox_button_press_event(self,*args):
+        self.gm.get_object('PlotDisplayWindow').hide()
             
+    def on_maxevtoggle_toggled(self,button,*args):
+        if button.get_active():
+            self.autostop_max_events=int(self.gm.get_object('maxeventry').get_text())
+        else:
+            self.autostop_max_events=-1
+
 class waiter:
     def __init__(self,gm_):
         self.reset()
