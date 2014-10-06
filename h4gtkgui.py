@@ -223,6 +223,17 @@ class H4GtkGui:
             self.status['table_position']=(float(parts[0]),float(parts[1]),str(parts[2]))
             if node in self.keep.keys():
                 self.keepalive['table']=True
+        elif tit==self.gui_in_messages['transfer']:
+            if node=='EVTB':
+                transferTime = int(parts[0]) # in usec
+                transferSize = int(parts[1]) # in bytes
+                rate = float(transferSize)/1.048576/float(transferTime) # MB/s
+                self.status['spillsize']=float(transferSize)/1048576. # MB
+                self.status['transferRate']=rate
+        elif tit==self.gui_in_messages['spillduration']:
+            if node=='RC' and len(parts)>3 and self.status['runnumber']==int(parts[0]) and self.status['spillnumber']==int(parts[1]):
+                self.status['spillduration']=long(parts[3])
+                
 
 # RUN STATUS AND COUNTERS, GUI ELEMENTS SENSITIVITY AND MANIPULATION
     def update_gui_statuscounters(self):
