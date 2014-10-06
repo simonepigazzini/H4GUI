@@ -7,6 +7,7 @@ import gobject
 import pygst
 import gst
 import datetime
+import urllib
 from zmq import *
 from h4dbclasses import *
 
@@ -17,7 +18,7 @@ class H4GtkGui:
         self.debug=False
         self.activatesounds=False
 
-        self.pubsocket_bind_address='tcp://*:5566'
+        self.pubsocket_bind_address='tcp://*:6767'
 
         self.nodes=[
             ('RC','tcp://pcethtb2.cern.ch:6002'),
@@ -42,7 +43,9 @@ class H4GtkGui:
             'status': 'STATUS',
             'log': 'GUI_LOG',
             'error': 'GUI_ERROR',
-            'tablepos': 'TABLE_IS'
+            'tablepos': 'TABLE_IS',
+            'transfer': 'TRANSFER',
+            'spillduration': 'SPILLDURATION'
             }
         self.rsdict={ #imported from H4DAQ/interface/Command.hpp 
             0:'START',
@@ -68,6 +71,19 @@ class H4GtkGui:
         self.remotestatuses_running=[4,5,6,7,8,9,10,11,12]
         self.remotestatuses_stopped=[0,1,2,13,14]
 
+
+        self.imagenames={}
+        self.imagenames['image1']=''
+        self.imagenames['image2']=''
+        self.imagenames['image3']=''
+        self.imagenames['image4']=''
+        self.imagenames['image5']=''
+        self.imagenames['image6']=''
+        self.imagenames['image7']=''
+        self.imagenames['image8']=''
+        self.imagenames['image9']=''
+        
+
     def __init__(self):
 
         self.configure()
@@ -78,7 +94,11 @@ class H4GtkGui:
             'spillnumber': 0,
             'evinrun': 0,
             'evinspill': 0,
-            'table_status': (0,0,'TAB_DONE')
+            'table_status': (0,0,'TAB_DONE'),
+            'spillsize': 0,
+            'transferRate': 0,
+            'spillduration': 0,
+            'trigrate': 0
             }
         self.remotestatus={}
         self.remotestatuscode={}
@@ -232,8 +252,11 @@ class H4GtkGui:
                 self.status['transferRate']=rate
         elif tit==self.gui_in_messages['spillduration']:
             if node=='RC' and len(parts)>3 and self.status['runnumber']==int(parts[0]) and self.status['spillnumber']==int(parts[1]):
-                self.status['spillduration']=long(parts[3])
-                
+                self.status['spillduration']=float(parts[2])/1000000. # in seconds
+                if self.status['spillduration']!=0:
+                    self.status['trigrate']=self.remoteevinspill['RC']/self.status['spillduration']
+                else:
+                    self.status['trigrate']=0
 
 # RUN STATUS AND COUNTERS, GUI ELEMENTS SENSITIVITY AND MANIPULATION
     def update_gui_statuscounters(self):
@@ -254,6 +277,11 @@ class H4GtkGui:
         self.gm.get_object('spillnumberlabel').set_text(str().join(['Spill number: ',str(self.status['spillnumber'])]))
         self.gm.get_object('evinrunlabel').set_text(str().join(['Total #events in run: ',str(self.status['evinrun'])]))
         self.gm.get_object('evinspilllabel').set_text(str().join(['Nr. of events in spill: ',str(self.status['evinspill'])]))
+        self.gm.get_object('gentriglabel').set_text(str().join(['Generated triggers: ???']))
+        self.gm.get_object('spillsizelabel').set_text(str().join(['Spill size (MB): ',str(self.status['spillsize'])]))
+        self.gm.get_object('transfratelabel').set_text(str().join(['Transfer rate (MB/s): ',str(self.status['transferRate'])]))
+        self.gm.get_object('spilldurationlabel').set_text(str().join(['Spill duration (s): ',str(self.status['spillduration'])]))
+        self.gm.get_object('trigratelabel').set_text(str().join(['Trigger rate (Hz): ',str(self.status['trigrate'])]))
         return True
 
     def set_sens(self,wids,value):
@@ -757,9 +785,17 @@ class H4GtkGui:
 
 # PLOT DISPLAY WINDOW
     def on_eventbox_image_button_press_event(self,mybox,*args):
-        self.show_plot_display(self.imagenames.get(mybox.get_child().get_name(),None))
+        self.show_plot_display(self.imagenames.get(gtk.Buildable.get_name(mybox.get_child()),None))
     def show_plot_display(self,imagefile=None):
-        self.gm.get_object('imagelargedisplay').set_from_file(imagefile)
+        if imagefile==None or imagefile=='':
+            self.gm.get_object('PlotDisplayWindow').show()
+            return
+        myim=str(imagefile)
+        if myim.find('http://')!=-1:
+            newname='tmp_'+myim.split('/')[-1]
+            urllib.urlretrieve(myim,newname)
+            myim=newname
+        self.gm.get_object('imagelargedisplay').set_from_file(myim)
         self.gm.get_object('PlotDisplayWindow').show()
     def on_imageeventbox_button_press_event(self,*args):
         self.gm.get_object('PlotDisplayWindow').hide()

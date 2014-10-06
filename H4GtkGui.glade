@@ -1725,7 +1725,6 @@
   </object>
   <object class="GtkWindow" id="PlotDisplayWindow">
     <property name="can_focus">False</property>
-    <property name="type">popup</property>
     <property name="title" translatable="yes">DQM plot display</property>
     <property name="deletable">False</property>
     <child>
