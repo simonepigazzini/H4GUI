@@ -357,7 +357,7 @@ class H4GtkGui:
             button.set_increments(0.1,1)
             button.set_range(-1000,1000)
             button.set_wrap(False)
-        self.init_gtkcombobox(self.gm.get_object('runtypebutton'),['PHYSICS','PEDESTAL'])
+        self.init_gtkcombobox(self.gm.get_object('runtypebutton'),['PHYSICS','PEDESTAL','LED'])
         self.init_gtkcombobox(self.gm.get_object('beamparticlebox'),['Electron','Positron','Pion','Muon'])
         gobject.idle_add(self.define_sensitivity_runtext)
 
