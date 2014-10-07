@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import pygtk
 pygtk.require('2.0')
@@ -160,7 +161,7 @@ class H4GtkGui:
         gobject.timeout_add(500,self.check_alarm)
 
         gobject.idle_add(self.update_gui_statuscounters)
-        gobject.timeout_add(5000,self.update_temperature)
+        gobject.timeout_add(500,self.update_temperature)
 
 
 # NETWORKING
@@ -304,6 +305,27 @@ class H4GtkGui:
         self.gm.get_object('transfratelabel').set_text(str().join(['Transfer rate (MB/s): ',str('%.1f'%(self.status['transferRate'],))]))
         self.gm.get_object('spilldurationlabel').set_text(str().join(['Spill duration (s): ',str('%.3f'%(self.status['spillduration'],))]))
         self.gm.get_object('trigratelabel').set_text(str().join(['Trigger rate (Hz): ',str('%.1f'%(self.status['trigrate'],))]))
+        temptext = ' Sensors temp. (°C): '
+        for i in xrange(len(self.status['temperatures'])):
+            if i>0:
+                temptext+='/ '
+            mytemp = ''
+            if self.status['temperatures'][i]!=None:
+                mytemp = '%.2f '%(self.status['temperatures'][i],)
+            temptext+=mytemp
+        self.gm.get_object('templabel').set_text(temptext)
+        temptext='Humidity ('+'%'+'): '
+        if self.status['humidity']:
+            temptext+='%.2f'%(self.status['humidity'],)
+        self.gm.get_object('humlabel').set_text(temptext)
+        temptext='Dew point (°C): '
+        if self.status['dewpoint']:
+            temptext+='%.2f'%(self.status['dewpoint'],)
+        self.gm.get_object('dewpointlabel').set_text(temptext)
+        temptext='Lauda temp. (°C): '
+        if self.status['laudatemp']:
+            temptext+='%.2f '%(self.status['laudatemp'],)
+        self.gm.get_object('laudatemplabel').set_text(temptext)
         return True
 
     def set_sens(self,wids,value):
