@@ -243,6 +243,8 @@ class H4GtkGui:
             self.update_gui_statuscounters()
             if not oldstatus==self.remotestatus[node]:
                 self.Log('Status change for '+str(node)+': '+str(oldstatus)+' -> '+str(self.remotestatus[node]))
+                if self.remotestatus[node]=='ERROR':
+                    self.set_alarm('Node %s in ERROR'%(node,),2)
                 if node=='RC':
                     self.processrccommand(self.remotestatus[node])
         elif tit=='GUI_LOG':
