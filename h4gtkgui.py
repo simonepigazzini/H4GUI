@@ -96,6 +96,7 @@ class H4GtkGui:
             'evinrun': 0,
             'evinspill': 0,
             'table_status': (0,0,'TAB_DONE'),
+            'badspills': 0,
             'spillsize': 0,
             'transferRate': 0,
             'spillduration': 0,
@@ -250,8 +251,11 @@ class H4GtkGui:
                 self.keepalive['table']=True
         elif tit==self.gui_in_messages['transfer']:
             if node=='EVTB':
-                transferTime = int(parts[0]) # in usec
-                transferSize = int(parts[1]) # in bytes
+                myrunnr = int(parts[0]) # unused
+                myspillnr = int(parts[1]) # unused
+                self.status['badspills']=int(parts[2]) # number of bad spills
+                transferTime = int(parts[3]) # in usec
+                transferSize = int(parts[4]) # in bytes
                 rate = float(transferSize)/1.048576/float(transferTime) # MB/s
                 self.status['spillsize']=float(transferSize)/1048576. # MB
                 self.status['transferRate']=rate
@@ -284,6 +288,7 @@ class H4GtkGui:
             self.gm.get_object('evtblabel').set_text(str(' ').join(('Event builder:',self.remotestatus['EVTB'])))
         self.gm.get_object('runnumberlabel').set_text(str().join(['Run number: ',str(self.status['runnumber'])]))
         self.gm.get_object('spillnumberlabel').set_text(str().join(['Spill number: ',str(self.status['spillnumber'])]))
+        self.gm.get_object('badspilllabel').set_text(str().join(['Nr. of bad spills: ',str(self.status['badspills'])]))
         self.gm.get_object('evinrunlabel').set_text(str().join(['Total #events in run: ',str(self.status['evinrun'])]))
         self.gm.get_object('evinspilllabel').set_text(str().join(['Nr. of events in spill: ',str(self.status['evinspill'])]))
         self.gm.get_object('gentriglabel').set_text(str().join([ 'Dead time: %.2f'%(self.status['deadtime'],)      ,' %'      ]))
