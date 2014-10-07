@@ -288,7 +288,7 @@ class H4GtkGui:
             self.gm.get_object('evtblabel').set_text(str(' ').join(('Event builder:',self.remotestatus['EVTB'])))
         self.gm.get_object('runnumberlabel').set_text(str().join(['Run number: ',str(self.status['runnumber'])]))
         self.gm.get_object('spillnumberlabel').set_text(str().join(['Spill number: ',str(self.status['spillnumber'])]))
-        self.gm.get_object('badspilllabel').set_text(str().join(['Nr. of bad spills: ',str(self.status['badspills'])]))
+        self.gm.get_object('badspillslabel').set_text(str().join(['Nr. of bad spills: ',str(self.status['badspills'])]))
         self.gm.get_object('evinrunlabel').set_text(str().join(['Total #events in run: ',str(self.status['evinrun'])]))
         self.gm.get_object('evinspilllabel').set_text(str().join(['Nr. of events in spill: ',str(self.status['evinspill'])]))
         self.gm.get_object('gentriglabel').set_text(str().join([ 'Dead time: %.2f'%(self.status['deadtime'],)      ,' %'      ]))
