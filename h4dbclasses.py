@@ -54,6 +54,7 @@ class DbInterface:
         res=[]
         for line in self.cursor:
             res.append(int(line[0]))
+        self.cnx.commit()
         if len(res)>1:
             print 'Warning! More than one match, returning the last one.'
         if len(res)==0:
@@ -74,6 +75,7 @@ class DbInterface:
             for i in xrange(len(line)):
                 thisdict[ptr.keys()[i]]=line[i]
             res.append(thisdict)
+        self.cnx.commit()
         return res
 
     def insert(self,dbclass,table):
@@ -262,6 +264,7 @@ class DataTakingConfigHandler:
         self.db.cursor.execute('SELECT LAST_INSERT_ID()')
         for line in self.db.cursor:
             thisrunnr=int(line[0])
+        self.cnx.commit()
         print 'last insert id = ',thisrunnr
         thisconf=self.read_from_db(runnr=thisrunnr)
         return thisconf
@@ -301,6 +304,7 @@ class DataTakingConfigHandler:
         for line in self.db.cursor:
             if len(line)>0 and line[0]:
                 res=int(line[0])
+        self.cnx.commit()
         return res
 
     def run_exists(self,runnr):
@@ -309,6 +313,7 @@ class DataTakingConfigHandler:
         for line in self.db.cursor:
             if len(line)>0 and line[0] and int(line[0])==runnr:
                 res=True
+        self.cnx.commit()
         return res
 
     def get_latest_environment(self):
