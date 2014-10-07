@@ -105,13 +105,16 @@ class H4GtkGui:
         self.remoterunnr={}
         self.remotespillnr={}
         self.remoteevinspill={}
+        self.remotegentriginspill={}
+        self.remoteevinrun={}
         for node,addr in self.nodes:
             self.remotestatuscode[node]=self.remotestatus_juststarted
             self.remotestatus[node]=self.rsdict[self.remotestatuscode[node]]
             self.remoterunnr[node]=0
             self.remotespillnr[node]=0
             self.remoteevinspill[node]=0
-        self.localspilldb={}
+            self.remotegentriginspill[node]=0
+            self.remoteevinrun[node]=0
         self.remoteispaused=False
         self.allbuttons=['createbutton','startbutton','pausebutton','stopbutton']
         self.allrunblock=['runtypebutton','runnumberspinbutton','tablexspinbutton','tableyspinbutton',
@@ -211,16 +214,17 @@ class H4GtkGui:
                     self.remotespillnr[node]=int(parts[2])
                 if len(parts)>3:
                     self.remoteevinspill[node]=int(parts[3])
-                if len(parts)>4 and str(parts[4])=='PAUSED':
+                if len(parts)>4:
+                    self.remotegentriginspill[node]=int(parts[4])
+                if len(parts)>5:
+                    self.remoteevinrun[node]=int(parts[5])
+                if len(parts)>6 and str(parts[6])=='PAUSED':
                     self.remoteispaused=True
                 else:
                     self.remoteispaused=False
             except ValueError:
                 self.Log('Impossible to interpret message: <'+msg+'>')
                 True
-            if node=='RC':
-                if self.remotestatuscode[node]>=5 and self.remotestatuscode[node]<=11:
-                    self.localspilldb[self.remotespillnr[node]]=self.remoteevinspill[node]
             self.remotestatus[node]=self.rsdict[self.remotestatuscode[node]]
             if self.remotestatuscode[node] in self.remotestatuses_datataking:
                 self.remotestatus[node]='DATATAKING'
@@ -262,8 +266,12 @@ class H4GtkGui:
     def update_gui_statuscounters(self):
         self.status['runnumber']=self.remoterunnr['RC']
         self.status['spillnumber']=self.remotespillnr['RC']
-        self.status['evinrun']=sum(self.localspilldb.values())
         self.status['evinspill']=self.remoteevinspill['RC']
+        self.status['evinrun']=self.remoteevinrun['RC']
+        if self.remotegentriginspill['RC']>0:
+            self.status['deadtime']=100.*float(self.remoteevinspill['RC'])/float(self.remotegentriginspill['RC'])
+        else:
+            self.status['deadtime']=100.
         if not self.gm.get_object('runstatuslabel').get_text().split(' ')[-1]==self.remotestatus['RC']:
             self.gm.get_object('runstatuslabel').set_text(str(' ').join(('Run controller:',self.remotestatus['RC'])))
             self.flash_widget(self.gm.get_object('runstatusbox'),'green')
@@ -277,11 +285,11 @@ class H4GtkGui:
         self.gm.get_object('spillnumberlabel').set_text(str().join(['Spill number: ',str(self.status['spillnumber'])]))
         self.gm.get_object('evinrunlabel').set_text(str().join(['Total #events in run: ',str(self.status['evinrun'])]))
         self.gm.get_object('evinspilllabel').set_text(str().join(['Nr. of events in spill: ',str(self.status['evinspill'])]))
-        self.gm.get_object('gentriglabel').set_text(str().join(['Generated triggers: ???']))
-        self.gm.get_object('spillsizelabel').set_text(str().join(['Spill size (MB): ',str(self.status['spillsize'])]))
-        self.gm.get_object('transfratelabel').set_text(str().join(['Transfer rate (MB/s): ',str(self.status['transferRate'])]))
-        self.gm.get_object('spilldurationlabel').set_text(str().join(['Spill duration (s): ',str(self.status['spillduration'])]))
-        self.gm.get_object('trigratelabel').set_text(str().join(['Trigger rate (Hz): ',str(self.status['trigrate'])]))
+        self.gm.get_object('gentriglabel').set_text(str().join([ 'Dead time: %.2f'%(self.status['deadtime'],)      ,' %'      ]))
+        self.gm.get_object('spillsizelabel').set_text(str().join(['Spill size (MB): ',str('%.1f'%(self.status['spillsize'],))]))
+        self.gm.get_object('transfratelabel').set_text(str().join(['Transfer rate (MB/s): ',str('%.1f'%(self.status['transferRate'],))]))
+        self.gm.get_object('spilldurationlabel').set_text(str().join(['Spill duration (s): ',str('%.3f'%(self.status['spillduration'],))]))
+        self.gm.get_object('trigratelabel').set_text(str().join(['Trigger rate (Hz): ',str('%.1f'%(self.status['trigrate'],))]))
         return True
 
     def set_sens(self,wids,value):
@@ -492,7 +500,6 @@ class H4GtkGui:
                     return
         self.get_gui_confblock()
         self.status['evinrun']=0
-        self.localspilldb.clear()
         self.confblock.r['run_starttime']=str(datetime.datetime.utcnow().isoformat())
         self.confblock=self.confdb.add_into_db(self.confblock)
         self.update_gui_confblock()
