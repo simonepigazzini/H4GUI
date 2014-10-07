@@ -153,7 +153,6 @@ class RunDbClass(AbsDbClass):
                 ('run_start_user_comment','str'),
                 ('run_end_user_comment','str'),
                 ('run_comment','str'),
-                ('run_starttime','str'),
                 ('run_exit_code','int')
                 ])
 class RunTypeDbClass(AbsDbClass):

@@ -9,6 +9,7 @@ import pygst
 import gst
 import datetime
 import urllib
+from subprocess import *
 from zmq import *
 from h4dbclasses import *
 
@@ -526,8 +527,6 @@ class H4GtkGui:
         self.confblock = self.confdb.read_from_db(runnr=self.confblock.r['run_number'])
         self.gotostatus('CREATED')
         self.confblock.r['run_end_user_comment']=''
-        self.confblock.r['run_starttime']=''
-        self.confblock.r['run_endtime']=''
         self.confblock.r['run_comment']=''
         self.update_gui_confblock()
 
@@ -539,7 +538,7 @@ class H4GtkGui:
                     return
         self.get_gui_confblock()
         self.status['evinrun']=0
-        self.confblock.r['run_starttime']=str(datetime.datetime.utcnow().isoformat())
+        self.confblock.d['dat_gitcommitid']=self.get_latest_commit()
         self.confblock=self.confdb.add_into_db(self.confblock)
         self.update_gui_confblock()
         self.Log('Sending START for run '+str(self.confblock.r['run_number']))
@@ -581,7 +580,6 @@ class H4GtkGui:
         self.Log('Sending STOP for run '+str(self.confblock.r['run_number']))
         self.send_message(self.gui_out_messages['stoprun'])
         self.gui_go_to_runnr(self.status['runnumber'])
-        self.confblock.r['run_endtime']=str(datetime.datetime.utcnow().isoformat())
         self.mywaiter.reset()
         self.mywaiter.set_layout('Waiting for run to stop','Go back','Force transition')
         self.mywaiter.set_condition(self.remstatus_is,[[self.remotestatus_betweenruns]])
@@ -866,7 +864,6 @@ class H4GtkGui:
             self.gm.get_object('maxevtoggle').modify_bg(gtk.STATE_NORMAL,None)
             self.gm.get_object('maxevtoggle').modify_bg(gtk.STATE_PRELIGHT,None)
 
-
     def update_temperature(self):
         myenv = self.confdb.get_latest_environment()
         self.status['temperatures']=[myenv['T1'],myenv['T2'],myenv['T3'],myenv['T4'],myenv['T5']]
@@ -875,6 +872,15 @@ class H4GtkGui:
         myenv2 = self.confdb.get_latest_laudareading()
         self.status['laudatemp']=myenv2['lauda_temp_mon']
         return True
+
+    def get_latest_commit():
+        p1 = Popen(['git','--work-tree=../H4DAQ','log','--pretty=format:\"%H\"'], stdout=PIPE)
+        p2 = Popen(['head', '-n 1'], stdin=p1.stdout, stdout=PIPE)
+        p1.stdout.close()
+        output = p2.communicate()[0]
+        output=output.replace('\n','')
+        output=output.replace('\"','')
+        return str(output)
 
 
 class waiter:
