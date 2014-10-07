@@ -16,7 +16,8 @@ class DbInterface:
 #        'password': getpass.getpass('DB password: '),
         'host': 'pcethtb2.cern.ch',
         'database': 'rundb_v2',
-        'raise_on_warnings': True
+        'raise_on_warnings': True,
+        'autocommit': True
         }
 
     def __init__(self):
@@ -54,7 +55,6 @@ class DbInterface:
         res=[]
         for line in self.cursor:
             res.append(int(line[0]))
-        self.cnx.commit()
         if len(res)>1:
             print 'Warning! More than one match, returning the last one.'
         if len(res)==0:
@@ -75,7 +75,6 @@ class DbInterface:
             for i in xrange(len(line)):
                 thisdict[ptr.keys()[i]]=line[i]
             res.append(thisdict)
-        self.cnx.commit()
         return res
 
     def insert(self,dbclass,table):
@@ -94,7 +93,6 @@ class DbInterface:
         query+=vals
         print query%dbclass
         self.cursor.execute(query,dbclass)
-        self.cnx.commit()
 
     def update(self,dbclass,table,selection):
         query='UPDATE %s SET ' % (table,)
@@ -109,7 +107,6 @@ class DbInterface:
         query+=' %s' % (selection,)
         print query%dbclass
         self.cursor.execute(query,dbclass)
-        self.cnx.commit()
 
 
 class AbsDbClass(OrderedDict):
@@ -264,7 +261,6 @@ class DataTakingConfigHandler:
         self.db.cursor.execute('SELECT LAST_INSERT_ID()')
         for line in self.db.cursor:
             thisrunnr=int(line[0])
-        self.cnx.commit()
         print 'last insert id = ',thisrunnr
         thisconf=self.read_from_db(runnr=thisrunnr)
         return thisconf
@@ -304,7 +300,6 @@ class DataTakingConfigHandler:
         for line in self.db.cursor:
             if len(line)>0 and line[0]:
                 res=int(line[0])
-        self.cnx.commit()
         return res
 
     def run_exists(self,runnr):
@@ -313,7 +308,6 @@ class DataTakingConfigHandler:
         for line in self.db.cursor:
             if len(line)>0 and line[0] and int(line[0])==runnr:
                 res=True
-        self.cnx.commit()
         return res
 
     def get_latest_environment(self):
