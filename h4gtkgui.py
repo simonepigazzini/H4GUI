@@ -100,8 +100,13 @@ class H4GtkGui:
             'spillsize': 0,
             'transferRate': 0,
             'spillduration': 0,
-            'trigrate': 0
+            'trigrate': 0,
+            'temperatures': [],
+            'humidity': 0,
+            'dewpoint': 0,
+            'laudatemp': 0
             }
+
         self.remotestatus={}
         self.remotestatuscode={}
         self.remoterunnr={}
@@ -109,6 +114,7 @@ class H4GtkGui:
         self.remoteevinspill={}
         self.remotegentriginspill={}
         self.remoteevinrun={}
+
         for node,addr in self.nodes:
             self.remotestatuscode[node]=self.remotestatus_juststarted
             self.remotestatus[node]=self.rsdict[self.remotestatuscode[node]]
@@ -117,6 +123,7 @@ class H4GtkGui:
             self.remoteevinspill[node]=0
             self.remotegentriginspill[node]=0
             self.remoteevinrun[node]=0
+
         self.remoteispaused=False
         self.allbuttons=['createbutton','startbutton','pausebutton','stopbutton']
         self.allrunblock=['runtypebutton','runnumberspinbutton','tablexspinbutton','tableyspinbutton',
@@ -153,6 +160,7 @@ class H4GtkGui:
         gobject.timeout_add(500,self.check_alarm)
 
         gobject.idle_add(self.update_gui_statuscounters)
+        gobject.timeout_add(5000,self.update_temperature)
 
 
 # NETWORKING
@@ -836,6 +844,17 @@ class H4GtkGui:
             self.gm.get_object('maxevtoggle').modify_bg(gtk.STATE_NORMAL,None)
             self.gm.get_object('maxevtoggle').modify_bg(gtk.STATE_PRELIGHT,None)
 
+
+    def update_temperature(self):
+        myenv = self.confdb.get_latest_environment()
+        self.status['temperatures']=[myenv['T1'],myenv['T2'],myenv['T3'],myenv['T4'],myenv['T5']]
+        self.status['humidity']=myenv['Humidity']
+        self.status['dewpoint']=myenv['DewPoint']
+        myenv2 = self.confdb.get_latest_laudareading()
+        self.status['laudatemp']=myenv2['lauda_temp_mon']
+        return True
+
+
 class waiter:
     def __init__(self,gm_):
         self.reset()
@@ -903,6 +922,7 @@ class waiter:
                     self.back_func(*(self.back_func_args))
             self.dialog.hide()
             return False
+
 
 # MAIN
 if __name__ == "__main__":

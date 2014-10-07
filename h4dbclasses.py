@@ -143,17 +143,18 @@ class RunDbClass(AbsDbClass):
     def __init__(self):
         super(RunDbClass,self).__init__([
                 ('run_number','int'),
-                ('run_nevents','int'),
                 ('run_type_id','int'),
                 ('run_beam_id','int'),
+                ('run_daq_id','int'),
+                ('run_nevents','int'),
+                ('run_deadtime','float'),
                 ('table_horizontal_position','float'),
                 ('table_vertical_position','float'),
                 ('run_start_user_comment','str'),
                 ('run_end_user_comment','str'),
                 ('run_comment','str'),
                 ('run_starttime','str'),
-                ('run_endtime','str'),
-                ('run_daq_id','int')
+                ('run_exit_code','int')
                 ])
 class RunTypeDbClass(AbsDbClass):
     def __init__(self):
@@ -178,7 +179,30 @@ class DaqConfDbClass(AbsDbClass):
     def __init__(self):
         super(DaqConfDbClass,self).__init__([
                 ('daq_conf_id','int'),
-                ('daq_type_description','str')
+                ('daq_type_description','str'),
+                ('daq_gitcommitid','str')
+                ])
+class EnvironmentDbClass(AbsDbClass):
+    def __init__(self):
+        super(EnvironmentDbClass,self).__init__([
+                ('env_readout_id','int'),
+                ('env_timestamp','str'),
+                ('T1','float'),
+                ('T2','float'),
+                ('T3','float'),
+                ('T4','float'),
+                ('T5','float'),
+                ('Humidity','float'),
+                ('DewPoint','float')
+                ])
+class LaudaDbClass(AbsDbClass):
+    def __init__(self):
+        super(LaudaDbClass,self).__init__([
+                ('lauda_id','int'),
+                ('lauda_time','str'),
+                ('lauda_status','int'),
+                ('lauda_temp_set','float'),
+                ('lauda_temp_mon','float')
                 ])
         
 class DataTakingConfig:
@@ -192,9 +216,9 @@ class DataTakingConfig:
         self.t=RunTypeDbClass()
         self.b=BeamConfDbClass()
         self.d=DaqConfDbClass()
-        self.run_updateable=['run_nevents',
+        self.run_updateable=['run_nevents','run_deadtime',
                              'run_start_user_comment','run_end_user_comment',
-                             'run_comment','run_endtime']
+                             'run_comment','run_exit_code']
     def fixdatatypes(self):
         for item in [self.r,self.t,self.b,self.d]:
             item.fixdatatypes()
@@ -287,3 +311,15 @@ class DataTakingConfigHandler:
             if len(line)>0 and line[0] and int(line[0])==runnr:
                 res=True
         return res
+
+    def get_latest_environment(self):
+        target=EnvironmentDbClass()
+        target=self.getfirstsafe(self.db.read(target,'Environment','order by env_readout_id desc limit 1')) or EnvironmentDbClass()
+        target.fixdatatypes()
+        return target
+
+    def get_latest_laudareading(self):
+        target=LaudaDbClass()
+        target=self.getfirstsafe(self.db.read(target,'lauda','order by lauda_id desc limit 1')) or LaudaDbClass()
+        target.fixdatatypes()
+        return target
