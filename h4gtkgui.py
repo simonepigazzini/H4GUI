@@ -109,24 +109,17 @@ class H4GtkGui:
             'laudatemp': 0
             }
 
-        self.remotestatus={}
-        self.remotestatuscode={}
-        self.remoterunnr={}
-        self.remotespillnr={}
-        self.remoteevinspill={}
-        self.remotegentriginspill={}
-        self.remoteevinrun={}
-
+        self.remote={}
         for node,addr in self.nodes:
-            self.remotestatuscode[node]=self.remotestatus_juststarted
-            self.remotestatus[node]=self.rsdict[self.remotestatuscode[node]]
-            self.remoterunnr[node]=0
-            self.remotespillnr[node]=0
-            self.remoteevinspill[node]=0
-            self.remotegentriginspill[node]=0
-            self.remoteevinrun[node]=0
+            self.remote[('statuscode',node)]=self.remotestatus_juststarted
+            self.remote[('status',node)]=self.rsdict[self.remote[('statuscode',node)]]
+            self.remote[('runnumber',node)]=0
+            self.remote[('spillnumber',node)]=0
+            self.remote[('evinspill',node)]=0
+            self.remote[('gentriginspill',node)]=0
+            self.remote[('evinrun',node)]=0
+            self.remote[('paused',node)]=0
 
-        self.remoteispaused=False
         self.allbuttons=['createbutton','startbutton','pausebutton','stopbutton']
         self.allrunblock=['runtypebutton','runnumberspinbutton','tablexspinbutton','tableyspinbutton',
                           'runstarttext','runstoptext','runtext','daqstringentry','pedfrequencyspinbutton',
@@ -216,37 +209,24 @@ class H4GtkGui:
         tit = parts[0]
         parts = parts[1:]
         if tit==self.gui_in_messages['status']:
-            oldstatus=self.remotestatus[node]
-            try:
-                if len(parts)>0:
-                    self.remotestatuscode[node]=int(parts[0])
-                if len(parts)>1:
-                    self.remoterunnr[node]=int(parts[1])
-                if len(parts)>2:
-                    self.remotespillnr[node]=int(parts[2])
-                if len(parts)>3:
-                    self.remoteevinspill[node]=int(parts[3])
-                if len(parts)>4:
-                    self.remotegentriginspill[node]=int(parts[4])
-                if len(parts)>5:
-                    self.remoteevinrun[node]=int(parts[5])
-                if len(parts)>6 and str(parts[6])=='PAUSED':
-                    self.remoteispaused=True
-                else:
-                    self.remoteispaused=False
-            except ValueError:
-                self.Log('Impossible to interpret message: <'+msg+'>')
-                True
-            self.remotestatus[node]=self.rsdict[self.remotestatuscode[node]]
-            if self.remotestatuscode[node] in self.remotestatuses_datataking:
-                self.remotestatus[node]='DATATAKING'
+            oldstatus=self.remote[('status',node)]
+            for part in parts:
+                key,val=part.split('=')
+                try:
+                    self.remote[(key,node)]=int(val)
+                except ValueError:
+                    self.Log('Impossible to interpret message: <'+msg+'>')
+                    True
+            self.remote[('status',node)]=self.rsdict[self.remote[('statuscode',node)]]
+            if self.remote[('statuscode',node)] in self.remotestatuses_datataking:
+                self.remote[('status',node)]='DATATAKING'
             self.update_gui_statuscounters()
-            if not oldstatus==self.remotestatus[node]:
-                self.Log('Status change for '+str(node)+': '+str(oldstatus)+' -> '+str(self.remotestatus[node]))
-                if self.remotestatus[node]=='ERROR':
+            if not oldstatus==self.remote[('status',node)]:
+                self.Log('Status change for '+str(node)+': '+str(oldstatus)+' -> '+str(self.remote[('status',node)]))
+                if self.remote[('status',node)]=='ERROR':
                     self.set_alarm('Node %s in ERROR'%(node,),2)
                 if node=='RC':
-                    self.processrccommand(self.remotestatus[node])
+                    self.processrccommand(self.remote[('status',node)])
         elif tit=='GUI_LOG':
             self.Log(str().join(['[',str(node),']: '].extend(parts)))
         elif tit=='GUI_ERROR':
@@ -263,41 +243,53 @@ class H4GtkGui:
                 self.keepalive['table']=True
         elif tit==self.gui_in_messages['transfer']:
             if node=='EVTB':
-                myrunnr = int(parts[0]) # unused
-                myspillnr = int(parts[1]) # unused
-                self.status['badspills']=int(parts[2]) # number of bad spills
+                for part in parts:
+                    key,val=part.split('=')
+                    if key=='badspills':
+                        self.status[key]=int(val)
+                    elif key=='transferTime':
+                        transferTime=val
+                    elif key=='transrate_size':
+                        transferSize=val
                 transferTime = int(parts[3]) # in usec
                 transferSize = int(parts[4]) # in bytes
                 rate = float(transferSize)/1.048576/float(transferTime) # MB/s
                 self.status['spillsize']=float(transferSize)/1048576. # MB
                 self.status['transferRate']=rate
         elif tit==self.gui_in_messages['spillduration']:
-            if node=='RC' and len(parts)>3 and self.status['runnumber']==int(parts[0]) and self.status['spillnumber']==int(parts[1]):
-                self.status['spillduration']=float(parts[2])/1000000. # in seconds
-                if self.status['spillduration']!=0:
-                    self.status['trigrate']=self.remoteevinspill['RC']/self.status['spillduration']
-                else:
-                    self.status['trigrate']=0
+            if node=='RC':
+                for part in parts:
+                    key,val=part.split('=')
+                    if key=='runnumber' and self.status[key]!=int(val):
+                        break
+                    if key=='spillnumber' and self.status[key]!=int(val):
+                        break
+                    if key=='spillduration':
+                        self.status[key]=float(val)/1000000. # in seconds
+                        if val!=0:
+                            self.status['trigrate']=float(self.remote[('evinspill',node)])/self.status[key]
+                        else:
+                            self.status['trigrate']=0
 
 # RUN STATUS AND COUNTERS, GUI ELEMENTS SENSITIVITY AND MANIPULATION
     def update_gui_statuscounters(self):
-        self.status['runnumber']=self.remoterunnr['RC']
-        self.status['spillnumber']=self.remotespillnr['RC']
-        self.status['evinspill']=self.remoteevinspill['RC']
-        self.status['evinrun']=self.remoteevinrun['RC']
-        if self.remotegentriginspill['RC']>0:
-            self.status['deadtime']=100.*float(self.remoteevinspill['RC'])/float(self.remotegentriginspill['RC'])
+        self.status['runnumber']=self.remote[('runnumber','RC')]
+        self.status['spillnumber']=self.remote[('spillnumber','RC')]
+        self.status['evinspill']=self.remote[('evinspill','RC')]
+        self.status['evinrun']=self.remote[('evinrun','RC')]
+        if self.remote[('gentriginspill','RC')]>0:
+            self.status['deadtime']=100.*float(self.remote[('evinspill','RC')])/float(self.remote[('gentriginspill','RC')])
         else:
             self.status['deadtime']=100.
-        if not self.gm.get_object('runstatuslabel').get_text().split(' ')[-1]==self.remotestatus['RC']:
-            self.gm.get_object('runstatuslabel').set_text(str(' ').join(('Run controller:',self.remotestatus['RC'])))
+        if not self.gm.get_object('runstatuslabel').get_text().split(' ')[-1]==self.remote[('status','RC')]:
+            self.gm.get_object('runstatuslabel').set_text(str(' ').join(('Run controller:',self.remote[('status','RC')])))
             self.flash_widget(self.gm.get_object('runstatusbox'),'green')
         if 'RO1' in [x[0] for x in self.nodes]:
-            self.gm.get_object('ro1label').set_text( str(' ').join(('Data readout unit 1:',self.remotestatus['RO1'])))
+            self.gm.get_object('ro1label').set_text( str(' ').join(('Data readout unit 1:',self.remote[('status','RO1')])))
         if 'RO2' in [x[0] for x in self.nodes]:
-            self.gm.get_object('ro2label').set_text( str(' ').join(('Data readout unit 2:',self.remotestatus['RO2'])))
+            self.gm.get_object('ro2label').set_text( str(' ').join(('Data readout unit 2:',self.remote[('status','RO2')])))
         if 'EVTB' in [x[0] for x in self.nodes]:
-            self.gm.get_object('evtblabel').set_text(str(' ').join(('Event builder:',self.remotestatus['EVTB'])))
+            self.gm.get_object('evtblabel').set_text(str(' ').join(('Event builder:',self.remote[('status','EVTB')])))
         self.gm.get_object('runnumberlabel').set_text(str().join(['Run number: ',str(self.status['runnumber'])]))
         self.gm.get_object('spillnumberlabel').set_text(str().join(['Spill number: ',str(self.status['spillnumber'])]))
         self.gm.get_object('badspillslabel').set_text(str().join(['Nr. of bad spills: ',str(self.status['badspills'])]))
@@ -504,14 +496,14 @@ class H4GtkGui:
 
 # EXEC ACTIONS
     def processrccommand(self,command):
-        rc=self.remotestatuscode['RC']
+        rc=self.remote[('statuscode','RC')]
         if rc in self.remotestatuses_stopped:
             if self.status['localstatus'] in ['RUNNING','PAUSED']:
                 self.gotostatus('STOPPED')
             else:
                 self.gotostatus('INIT')
         else:
-            if not self.remoteispaused:
+            if not self.remote[('paused','RC')]:
                 self.gotostatus('RUNNING')
             else:
                 self.gotostatus('PAUSED')
@@ -519,7 +511,7 @@ class H4GtkGui:
             if self.autostop_max_events>0 and self.status['evinrun']>=self.autostop_max_events:
                 self.on_stopbutton_clicked()
     def remotecheckpaused(self,whatiwant):
-        return (self.remoteispaused==whatiwant)
+        return (self.remote[('paused','RC')]==whatiwant)
 
     def createrun(self):
         if self.status['localstatus']=='CREATED':
@@ -533,7 +525,9 @@ class H4GtkGui:
         self.update_gui_confblock()
 
     def startrun(self):
-        for node,val in self.remotestatuscode.iteritems():
+        for key,node,val in [(a[0],a[1],b) for a,b in self.remote.iteritems()]:
+            if key!='statuscode':
+                continue
             if node in ['RC','RO1','RO2','EVTB']:
                 if val!=self.remotestatus_betweenruns:
                     self.Log('Node %s not ready for STARTRUN'%(str(node),))
@@ -572,7 +566,7 @@ class H4GtkGui:
             self.mywaiter.run()
 
     def remstatus_is(self,whichstatus):
-        return (self.remotestatuscode['RC'] in whichstatus)
+        return (self.remote[('statuscode','RC')] in whichstatus)
 
     def stoprun(self):
         self.autostop_max_events=-1
