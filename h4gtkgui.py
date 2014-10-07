@@ -67,6 +67,7 @@ class H4GtkGui:
         self.remotestatus_juststarted=0
         self.remotestatus_betweenruns=2
         self.remotestatus_betweenspills=3
+        self.remotestatus_endofspill=9
         self.remotestatuses_datataking=[6,7,8]
         self.remotestatuses_running=[4,5,6,7,8,9,10,11,12]
         self.remotestatuses_stopped=[0,1,2,13,14]
@@ -476,6 +477,9 @@ class H4GtkGui:
                 self.gotostatus('RUNNING')
             else:
                 self.gotostatus('PAUSED')
+        if rc==self.remotestatus_endofspill:
+            if self.autostop_max_events>0 and self.status['evinrun']>=self.autostop_max_events:
+                self.on_stopbutton_clicked()
     def remotecheckpaused(self,whatiwant):
         return (self.remoteispaused==whatiwant)
 
@@ -535,6 +539,10 @@ class H4GtkGui:
         return (self.remotestatuscode['RC'] in whichstatus)
 
     def stoprun(self):
+        self.autostop_max_events=-1
+        self.gm.get_object('maxevtoggle').set_active(False)
+        self.gm.get_object('maxevtoggle').modify_bg(gtk.STATE_NORMAL,None)
+        self.gm.get_object('maxevtoggle').modify_bg(gtk.STATE_PRELIGHT,None)
         self.Log('Sending STOP for run '+str(self.confblock.r['run_number']))
         self.send_message(self.gui_out_messages['stoprun'])
         self.gui_go_to_runnr(self.status['runnumber'])
@@ -743,8 +751,14 @@ class H4GtkGui:
         self.clear_alarms()
     def on_vetoalarmbutton_toggled(self,*args):
         self.global_veto_alarm=self.gm.get_object('vetoalarmbutton').get_active()
+        color=None
         if self.global_veto_alarm:
+            color=gtk.gdk.color_parse('orange')
             self.clear_alarms()
+        self.gm.get_object('vetoalarmbutton').modify_bg(gtk.STATE_ACTIVE,color)
+        self.gm.get_object('vetoalarmbutton').modify_bg(gtk.STATE_PRELIGHT,color)
+
+
 
 # SOUNDS
     def bark(self,times):
@@ -810,8 +824,12 @@ class H4GtkGui:
     def on_maxevtoggle_toggled(self,button,*args):
         if button.get_active():
             self.autostop_max_events=int(self.gm.get_object('maxeventry').get_text())
+            self.gm.get_object('maxevtoggle').modify_bg(gtk.STATE_ACTIVE,gtk.gdk.color_parse('orange'))
+            self.gm.get_object('maxevtoggle').modify_bg(gtk.STATE_PRELIGHT,gtk.gdk.color_parse('orange'))
         else:
             self.autostop_max_events=-1
+            self.gm.get_object('maxevtoggle').modify_bg(gtk.STATE_NORMAL,None)
+            self.gm.get_object('maxevtoggle').modify_bg(gtk.STATE_PRELIGHT,None)
 
 class waiter:
     def __init__(self,gm_):
