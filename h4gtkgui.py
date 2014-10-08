@@ -32,6 +32,9 @@ class H4GtkGui:
 
         self.keepalive={}
         self.keepalive['RC']=True
+        self.keepalive['RO1']=True
+        self.keepalive['RO2']=True
+        self.keepalive['EVTB']=True
 #        self.keepalive['table']=True
 
         self.gui_out_messages={
@@ -168,7 +171,7 @@ class H4GtkGui:
         self.pub = self.context.socket(PUB)
         self.pub.bind(self.pubsocket_bind_address)
         gobject.idle_add(self.poll_sockets)
-        gobject.timeout_add(1000,self.check_keepalive)
+        gobject.timeout_add(5000,self.check_keepalive)
         return False
     def poll_sockets(self):
         socks = dict(self.poller.poll(1))
