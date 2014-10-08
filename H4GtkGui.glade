@@ -971,56 +971,63 @@
                                           </packing>
                                         </child>
                                         <child>
-                                          <object class="GtkHBox" id="hbox17">
+                                          <object class="GtkEventBox" id="tempeventbox">
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
+                                            <signal name="button-press-event" handler="on_tempeventbox_button_press_event" swapped="no"/>
                                             <child>
-                                              <object class="GtkLabel" id="templabel">
+                                              <object class="GtkHBox" id="hbox17">
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">False</property>
-                                                <property name="label" translatable="yes">   Sensors temp. (°C):    </property>
+                                                <child>
+                                                  <object class="GtkLabel" id="templabel">
+                                                    <property name="visible">True</property>
+                                                    <property name="can_focus">False</property>
+                                                    <property name="label" translatable="yes">   Sensors temp. (°C):    </property>
+                                                  </object>
+                                                  <packing>
+                                                    <property name="expand">True</property>
+                                                    <property name="fill">False</property>
+                                                    <property name="position">0</property>
+                                                  </packing>
+                                                </child>
+                                                <child>
+                                                  <object class="GtkLabel" id="humlabel">
+                                                    <property name="visible">True</property>
+                                                    <property name="can_focus">False</property>
+                                                    <property name="label" translatable="yes">   Humidity (%):    </property>
+                                                  </object>
+                                                  <packing>
+                                                    <property name="expand">True</property>
+                                                    <property name="fill">False</property>
+                                                    <property name="position">1</property>
+                                                  </packing>
+                                                </child>
+                                                <child>
+                                                  <object class="GtkLabel" id="dewpointlabel">
+                                                    <property name="visible">True</property>
+                                                    <property name="can_focus">False</property>
+                                                    <property name="label" translatable="yes">   Dew point (°C):   </property>
+                                                  </object>
+                                                  <packing>
+                                                    <property name="expand">True</property>
+                                                    <property name="fill">False</property>
+                                                    <property name="position">2</property>
+                                                  </packing>
+                                                </child>
+                                                <child>
+                                                  <object class="GtkLabel" id="laudatemplabel">
+                                                    <property name="visible">True</property>
+                                                    <property name="can_focus">False</property>
+                                                    <property name="label" translatable="yes">   Lauda temp. (°C):   </property>
+                                                  </object>
+                                                  <packing>
+                                                    <property name="expand">True</property>
+                                                    <property name="fill">False</property>
+                                                    <property name="position">3</property>
+                                                  </packing>
+                                                </child>
                                               </object>
-                                              <packing>
-                                                <property name="expand">True</property>
-                                                <property name="fill">False</property>
-                                                <property name="position">0</property>
-                                              </packing>
-                                            </child>
-                                            <child>
-                                              <object class="GtkLabel" id="humlabel">
-                                                <property name="visible">True</property>
-                                                <property name="can_focus">False</property>
-                                                <property name="label" translatable="yes">   Humidity (%):    </property>
-                                              </object>
-                                              <packing>
-                                                <property name="expand">True</property>
-                                                <property name="fill">False</property>
-                                                <property name="position">1</property>
-                                              </packing>
-                                            </child>
-                                            <child>
-                                              <object class="GtkLabel" id="dewpointlabel">
-                                                <property name="visible">True</property>
-                                                <property name="can_focus">False</property>
-                                                <property name="label" translatable="yes">   Dew point (°C):   </property>
-                                              </object>
-                                              <packing>
-                                                <property name="expand">True</property>
-                                                <property name="fill">False</property>
-                                                <property name="position">2</property>
-                                              </packing>
-                                            </child>
-                                            <child>
-                                              <object class="GtkLabel" id="laudatemplabel">
-                                                <property name="visible">True</property>
-                                                <property name="can_focus">False</property>
-                                                <property name="label" translatable="yes">   Lauda temp. (°C):   </property>
-                                              </object>
-                                              <packing>
-                                                <property name="expand">True</property>
-                                                <property name="fill">False</property>
-                                                <property name="position">3</property>
-                                              </packing>
                                             </child>
                                           </object>
                                           <packing>

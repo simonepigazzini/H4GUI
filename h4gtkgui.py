@@ -74,8 +74,14 @@ class H4GtkGui:
         self.remotestatuses_running=[4,5,6,7,8,9,10,11,12]
         self.remotestatuses_stopped=[0,1,2,13,14]
 
-        self.dqmplots=[] # [(tabname,plotname,largeplotname),...]
-        self.scripts={}
+        self.temperatureplot=None # 'http://blabla/tempplot.png'
+        self.dqmplots=[] # [('tabname','http://plotname','http://largeplotname.png'),...]
+        self.scripts={
+            'sync_clocks': None, #' /scripts/blabla.sh'
+            'free_space': None,
+            'start_daemons': None,
+            'kill_daemons': None
+        }
 
     def __init__(self):
 
@@ -118,6 +124,9 @@ class H4GtkGui:
         self.playlevel=0
         self.global_veto_alarm=False
         self.autostop_max_events=-1
+        self.locdqmplots={}
+        self.loclargedqmplots={}
+        self.dqmplotsimgb_={}
 
         gtk.rc_parse('.h4gtkrc')
         self.gm = gtk.Builder()
@@ -859,34 +868,52 @@ class H4GtkGui:
         output=output.replace('\"','')
         return str(output)
 
-    def fill_dqm_plots(self):
+    def init_dqm_plots(self):
         nb = self.gm.get_object('dqmnotebook')
+        tabnames=[]
         for tabname,plotname,largeplotname in self.dqmplots:
-            if tabname not in self.dqmplots_.keys():
+            if tabname not in tabnames:
                 nb.append_page(scrw,tabname)
-                self.dqmplots_[tabname]=[]
+                tabnames.append(tabname)
             scrw = gtk.ScrolledWindow()
             nb.append_page(scrw,label)
             tab = gtk.Table(1,3,True)
             evtb = gtk.EventBox()
             imgb = gtk.Image()
-            imgb.set_from_file()
             evtb.add(imgb)
             if y>=int(tab.get_property('n-rows')):
                 tab.resize(y+1,3)
             tab.attach(evtb,x,x+1,y,y+1)
-            self.dqmplots_[tabname].append(plotname)
-            handler_id = evtb.connect('button-press-event',self.on_dqm_plot_clicked,largeplotname)
-    def on_dqm_plot_clicked(self,imagefile=None):
+            locname=plotname.split('/')[-1]
+            loclargename=largeplotname.split('/')[-1]
+            self.dqmplotsimgb_[plotname]=imgb
+            handler_id = evtb.connect('button-press-event',self.on_image_clicked,self.loclargedqmplots[plotname])
+        self.update_dqm_plots()
+
+    def update_dqm_plots(self):
+        for tabname,plotname,largeplotname in self.dqmplots:
+            self.locdqmplots[plotname]=self.geturlfile(plotname)
+            self.loclargedqmplots[plotname]=self.geturlfile(largeplotname)
+            self.dqmplotsimgb_[plotname].set_from_file(self.locdqmplots[plotname])
+
+    def geturlfile(self,path):
+        if not path:
+            return None
+        if path.find('http://')!=-1:
+            newname='tmp/'+path.split('/')[-1]
+            urllib.urlretrieve(path,newname)
+        else:
+            newname=path
+        return newname
+
+
+    def on_tempeventbox_button_press_event(self,*args):
+        self.on_image_clicked(self.geturlfile(self.temperatureplot))
+    def on_image_clicked(self,imagefile=None):
         if imagefile==None or imagefile=='':
             self.gm.get_object('PlotDisplayWindow').show()
             return
-        myim=str(imagefile)
-        if myim.find('http://')!=-1:
-            newname='tmp_'+myim.split('/')[-1]
-            urllib.urlretrieve(myim,newname)
-            myim=newname
-        self.gm.get_object('imagelargedisplay').set_from_file(myim)
+        self.gm.get_object('imagelargedisplay').set_from_file(imagefile)
         self.gm.get_object('PlotDisplayWindow').show()
     def on_imageeventbox_button_press_event(self,*args):
         self.gm.get_object('PlotDisplayWindow').hide()
