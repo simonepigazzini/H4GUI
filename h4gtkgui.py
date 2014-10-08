@@ -20,7 +20,7 @@ class H4GtkGui:
         self.debug=False
         self.activatesounds=False
 
-        self.pubsocket_bind_address='tcp://*:6767'
+        self.pubsocket_bind_address='tcp://*:5567'
 
         self.nodes=[
             ('RC','tcp://pcethtb2.cern.ch:6002'),
@@ -211,6 +211,8 @@ class H4GtkGui:
         if tit==self.gui_in_messages['status']:
             oldstatus=self.remote[('status',node)]
             for part in parts:
+                if part.find('=')<0:
+                    continue
                 key,val=part.split('=')
                 try:
                     self.remote[(key,node)]=int(val)
@@ -228,15 +230,18 @@ class H4GtkGui:
                 if node=='RC':
                     self.processrccommand(self.remote[('status',node)])
         elif tit=='GUI_LOG':
-            self.Log(str().join(['[',str(node),']: '].extend(parts)))
+            print 'GUI_LOG TO BE IMPLEMENTED'
+#            self.Log(str().join(['[',str(node),']: '].extend(parts)) #IMPL
         elif tit=='GUI_ERROR':
-            level = int(parts[0])
-            parts=parts[1:]
-            message=str().join(['[',str(node),' ERROR]: ']).extend(parts)
-            self.Log(message)
-            self.set_alarm(message,level)
+            print 'GUI_ERROR TO BE IMPLEMENTED'
+#            level = int(parts[0])
+#            parts=parts[1:]
+#            message=str().join(['[',str(node),' ERROR]: ']).extend(parts)
+#            self.Log(message)
+#            self.set_alarm(message,level)
         elif tit=='GUI_SPS':
-            self.flash_sps(str(parts[0]))
+            print 'GUI_SPS TO BE IMPLEMENTED'
+            self.flash_sps(str(parts[0])) #IMPL
         elif tit==self.gui_in_messages['tablepos']:
             self.status['table_position']=(float(parts[0]),float(parts[1]),str(parts[2]))
             if node in self.keep.keys():
@@ -244,21 +249,23 @@ class H4GtkGui:
         elif tit==self.gui_in_messages['transfer']:
             if node=='EVTB':
                 for part in parts:
+                    if part.find('=')<0:
+                        continue
                     key,val=part.split('=')
                     if key=='badspills':
                         self.status[key]=int(val)
                     elif key=='transferTime':
-                        transferTime=val
+                        transferTime=val # in usec
                     elif key=='transrate_size':
-                        transferSize=val
-                transferTime = int(parts[3]) # in usec
-                transferSize = int(parts[4]) # in bytes
+                        transferSize=val # in bytes
                 rate = float(transferSize)/1.048576/float(transferTime) # MB/s
                 self.status['spillsize']=float(transferSize)/1048576. # MB
                 self.status['transferRate']=rate
         elif tit==self.gui_in_messages['spillduration']:
             if node=='RC':
                 for part in parts:
+                    if part.find('=')<0:
+                        continue
                     key,val=part.split('=')
                     if key=='runnumber' and self.status[key]!=int(val):
                         break
