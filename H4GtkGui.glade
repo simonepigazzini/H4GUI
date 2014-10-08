@@ -327,7 +327,7 @@
                   <object class="GtkButton" id="syncclocksbutton">
                     <property name="label">Sync clocks</property>
                     <property name="visible">True</property>
-                    <property name="can_focus">True</property>
+                    <property name="can_focus">False</property>
                     <property name="receives_default">True</property>
                     <property name="use_action_appearance">False</property>
                     <signal name="clicked" handler="on_syncclocksbutton_clicked" swapped="no"/>
@@ -337,7 +337,7 @@
                   <object class="GtkButton" id="freespacebutton">
                     <property name="label">Free disk space</property>
                     <property name="visible">True</property>
-                    <property name="can_focus">True</property>
+                    <property name="can_focus">False</property>
                     <property name="receives_default">True</property>
                     <property name="use_action_appearance">False</property>
                     <signal name="clicked" handler="on_freespacebutton_clicked" swapped="no"/>
@@ -440,7 +440,7 @@
                                                 <attributes>
                                                   <attribute name="weight" value="ultrabold"/>
                                                   <attribute name="foreground" value="#00000000ffff"/>
-                                                  <attribute name="scale" value="1.8"/>
+                                                  <attribute name="scale" value="1.5"/>
                                                 </attributes>
                                               </object>
                                               <packing>
@@ -457,7 +457,7 @@
                                                 <attributes>
                                                   <attribute name="weight" value="bold"/>
                                                   <attribute name="foreground" value="#00000000ffff"/>
-                                                  <attribute name="scale" value="1.8"/>
+                                                  <attribute name="scale" value="1.5"/>
                                                 </attributes>
                                               </object>
                                               <packing>
@@ -1230,6 +1230,20 @@
                                                   </packing>
                                                 </child>
                                                 <child>
+                                                  <object class="GtkButton" id="movetablebutton">
+                                                    <property name="label" translatable="yes">MOVE TABLE</property>
+                                                    <property name="visible">True</property>
+                                                    <property name="can_focus">False</property>
+                                                    <property name="receives_default">True</property>
+                                                    <property name="use_action_appearance">False</property>
+                                                  </object>
+                                                  <packing>
+                                                    <property name="expand">True</property>
+                                                    <property name="fill">True</property>
+                                                    <property name="position">4</property>
+                                                  </packing>
+                                                </child>
+                                                <child>
                                                   <object class="GtkLabel" id="evinrunindblabel">
                                                     <property name="visible">True</property>
                                                     <property name="can_focus">False</property>
@@ -1238,7 +1252,7 @@
                                                   <packing>
                                                     <property name="expand">True</property>
                                                     <property name="fill">True</property>
-                                                    <property name="position">4</property>
+                                                    <property name="position">5</property>
                                                   </packing>
                                                 </child>
                                               </object>

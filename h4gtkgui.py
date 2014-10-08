@@ -20,7 +20,7 @@ class H4GtkGui:
         self.debug=False
         self.activatesounds=False
 
-        self.pubsocket_bind_address='tcp://*:5567'
+        self.pubsocket_bind_address='tcp://*:5566'
 
         self.nodes=[
             ('RC','tcp://pcethtb2.cern.ch:6002'),
