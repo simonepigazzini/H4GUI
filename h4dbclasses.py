@@ -251,7 +251,7 @@ class DataTakingConfigHandler:
             beamconfid=self.db.find(thisconf.b,'beam_configuration',ignore_id=True)
         daqconfid=self.db.find(thisconf.d,'daq_configuration',ignore_id=True)
         if daqconfid<0:
-            thisconf.b['daq_conf_id']=None
+            thisconf.d['daq_conf_id']=None
             self.db.insert(thisconf.d,'daq_configuration')
             daqconfid=self.db.find(thisconf.d,'daq_configuration',ignore_id=True)
         thisconf.r['run_type_id']=runtypeid
