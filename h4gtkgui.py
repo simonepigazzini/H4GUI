@@ -18,7 +18,7 @@ class H4GtkGui:
     def configure(self):
 
         self.debug=False
-        self.activatesounds=True
+        self.activatesounds=False
 
         self.pubsocket_bind_address='tcp://*:5566'
 
@@ -80,7 +80,14 @@ class H4GtkGui:
         self.globalstopconsent=True
 
         self.temperatureplot=None # 'http://blabla/tempplot.png'
-        self.dqmplots=[] # [('tabname','http://plotname','http://largeplotname.png'),...]
+#        self.dqmplots=[] # [('tabname','http://plotname','http://largeplotname.png'),...]
+        self.dqmplots=[
+            ('tab1','/home/cmsdaq/DAQ/H4GUI/plots/canv11.png','/home/cmsdaq/DAQ/H4GUI/plots/canv21.png'),
+            ('tab1','/home/cmsdaq/DAQ/H4GUI/plots/canv12.png','/home/cmsdaq/DAQ/H4GUI/plots/canv22.png'),
+            ('tab1','/home/cmsdaq/DAQ/H4GUI/plots/canv13.png','/home/cmsdaq/DAQ/H4GUI/plots/canv23.png'),
+            ('tab2','/home/cmsdaq/DAQ/H4GUI/plots/canv14.png','/home/cmsdaq/DAQ/H4GUI/plots/canv24.png'),
+            ('tab2','/home/cmsdaq/DAQ/H4GUI/plots/canv15.png','/home/cmsdaq/DAQ/H4GUI/plots/canv25.png')
+            ]
         self.scripts={
             'sync_clocks': None, #' /scripts/blabla.sh'
             'free_space': None,
@@ -141,6 +148,7 @@ class H4GtkGui:
         self.mainWindow.set_position(gtk.WIN_POS_CENTER_ALWAYS)
         self.set_spinbuttons_properties()
         self.mywaiter = waiter(self.gm)
+        self.init_dqm_plots()
 
         self.confdb = DataTakingConfigHandler()
         self.confblock = DataTakingConfig()
@@ -148,7 +156,7 @@ class H4GtkGui:
         self.start_network()
 
         self.gotostatus('INIT')
-        self.mainWindow.show()
+        self.mainWindow.show_all()
 
         self.aliveblinkstatus=False
         gobject.timeout_add(1000,self.change_color_blinkingalive)
@@ -863,23 +871,34 @@ class H4GtkGui:
     def init_dqm_plots(self):
         nb = self.gm.get_object('dqmnotebook')
         tabnames=[]
+        scrollwin={}
+        myindex=0
         for tabname,plotname,largeplotname in self.dqmplots:
             if tabname not in tabnames:
-                nb.append_page(scrw,tabname)
+                scrollwin[tabname] = gtk.ScrolledWindow()
+                scrollwin[tabname].set_policy(gtk.POLICY_NEVER,gtk.POLICY_AUTOMATIC)
+                mylabel = gtk.Label(tabname)
+                nb.append_page(scrollwin[tabname],mylabel)
                 tabnames.append(tabname)
-            scrw = gtk.ScrolledWindow()
-            nb.append_page(scrw,label)
-            tab = gtk.Table(1,3,True)
+                scrw=scrollwin[tabname]
+                tab = gtk.Table(1,3,True)
+                scrw.add(tab)
+                myindex=0
             evtb = gtk.EventBox()
             imgb = gtk.Image()
             evtb.add(imgb)
+            x=int(myindex)%3
+            y=int(myindex)/3
             if y>=int(tab.get_property('n-rows')):
                 tab.resize(y+1,3)
             tab.attach(evtb,x,x+1,y,y+1)
             locname=plotname.split('/')[-1]
             loclargename=largeplotname.split('/')[-1]
             self.dqmplotsimgb_[plotname]=imgb
-            handler_id = evtb.connect('button-press-event',self.on_image_clicked,self.loclargedqmplots[plotname])
+            self.locdqmplots[plotname]=self.geturlfile(plotname)
+            self.loclargedqmplots[plotname]=self.geturlfile(largeplotname)
+            handler_id = evtb.connect('button-press-event',self.open_window_image_clicked,self.loclargedqmplots[plotname])
+            myindex+=1
         self.update_dqm_plots()
 
     def update_dqm_plots(self):
@@ -900,15 +919,24 @@ class H4GtkGui:
 
 
     def on_tempeventbox_button_press_event(self,*args):
-        self.on_image_clicked(self.geturlfile(self.temperatureplot))
-    def on_image_clicked(self,imagefile=None):
+        self.open_window_image_clicked(imagefile=self.geturlfile(self.temperatureplot))
+    def on_image_clicked_buttonpressev(self,wid,ev,im=None):
+        self.open_window_image_clicked(imagefile=im)
+
+    def open_window_image_clicked(self,wid=None,ev=None,imagefile=None,*args):
         if imagefile==None or imagefile=='':
-            self.gm.get_object('PlotDisplayWindow').show()
             return
-        self.gm.get_object('imagelargedisplay').set_from_file(imagefile)
-        self.gm.get_object('PlotDisplayWindow').show()
-    def on_imageeventbox_button_press_event(self,*args):
-        self.gm.get_object('PlotDisplayWindow').hide()
+        win = gtk.Window()
+        win.set_position(gtk.WIN_POS_MOUSE)
+        evtb = gtk.EventBox()
+        win.add(evtb)
+        imgb = gtk.Image()
+        imgb.set_from_file(imagefile)
+        evtb.add(imgb)
+        evtb.connect('button-press-event',self.closewinparent)
+        win.show_all()
+    def closewinparent(self,wid,*args):
+        wid.get_parent_window().destroy()
 
     def on_syncclocksbutton_clicked(self,*args):
         self.run_script(self.scripts.get('sync_clocks',None))
