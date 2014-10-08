@@ -549,7 +549,8 @@ class H4GtkGui:
     def startrun(self):
         self.get_gui_confblock()
         if not self.table_is_ok(self.confblock.r['table_horizontal_position'],self.confblock.r['table_vertical_position']):
-            self.Log('Table condition does not allow to start run: have you forgotten to actually move the table?')
+            self.Log('Table condition does not allow to start run: have you forgotten to actually move the table? Current situation:')
+            self.Log(str(self.status['table_status']))
             return
         for key,node,val in [(a[0],a[1],b) for a,b in self.remote.iteritems()]:
             if key!='statuscode':
@@ -754,8 +755,8 @@ class H4GtkGui:
             self.Log('ERROR: trying to move table while table is not stopped')
             return False
         if self.status['table_status']!=(newx,newy,'TAB_DONE'):
-            self.status['table_status'][2]='SENT_MOVE_ORDER'
-            self.send_message('SET_TABLE_POSITION %s %s' % (newx,newy,))
+            self.status['table_status']=(self.status['table_status'][0],self.status['table_status'][1],'SENT_MOVE_ORDER')
+#            self.send_message('SET_TABLE_POSITION %s %s' % (newx,newy,)) #SAFETY
         message='Waiting for table to move to '+str(newx)+' '+str(newy)
         self.mywaiter.reset()
         self.mywaiter.set_layout(message,None,'Force ACK table moving')
