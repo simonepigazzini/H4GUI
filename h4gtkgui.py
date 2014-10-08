@@ -77,7 +77,7 @@ class H4GtkGui:
         self.remotestatuses_running=[4,5,6,7,8,9,10,11,12]
         self.remotestatuses_stopped=[0,1,2,13,14]
 
-        self.globalstopconsent=True
+        self.globalstopconsent=False
 
         self.temperatureplot=None # 'http://blabla/tempplot.png'
 #        self.dqmplots=[] # [('tabname','http://plotname','http://largeplotname.png'),...]
@@ -520,11 +520,10 @@ class H4GtkGui:
                 if not self.globalstopconsent:
                     self.set_alarm('RUN STOPPED WITHOUT USER REQUEST',2)
                 self.gotostatus('STOPPED')
+                self.globalstopconsent=False
             else:
                 self.gotostatus('INIT')
-            self.globalstopconsent=True
         else:
-            self.globalstopconsent=False
             if not self.remote[('paused','RC')]:
                 self.gotostatus('RUNNING')
             else:
@@ -578,6 +577,7 @@ class H4GtkGui:
         return (self.remote[('statuscode','RC')] in whichstatus)
 
     def stoprun(self):
+        self.globalstopconsent=True
         self.autostop_max_events=-1
         self.gm.get_object('maxevtoggle').set_active(False)
         self.gm.get_object('maxevtoggle').modify_bg(gtk.STATE_NORMAL,None)
@@ -629,7 +629,6 @@ class H4GtkGui:
         if self.status['localstatus']=='STOPPED':
             self.closerun()
         else:
-            self.globalstopconsent=True
             self.mywaiter.reset()
             self.mywaiter.set_layout('Do you want to stop?','Cancel','Yes',color='orange')
             self.mywaiter.set_exit_func(self.stoprun,[])
