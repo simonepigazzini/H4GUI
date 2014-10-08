@@ -25,7 +25,7 @@ class H4GtkGui:
         self.nodes=[
             ('RC','tcp://pcethtb2.cern.ch:6002'),
             ('RO1','tcp://pcethtb1.cern.ch:6002'),
-#            ('RO2','tcp://localhost:6902'),
+            ('RO2','tcp://cms-h4-03:6002'),
             ('EVTB','tcp://pcethtb2.cern.ch:6502'),
 #            ('table','tcp://cms-h4-01:6999')
             ]
