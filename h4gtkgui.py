@@ -18,7 +18,7 @@ class H4GtkGui:
     def configure(self):
 
         self.debug=False
-        self.activatesounds=False
+        self.activatesounds=True
 
         self.pubsocket_bind_address='tcp://*:5566'
 
@@ -77,6 +77,8 @@ class H4GtkGui:
         self.remotestatuses_running=[4,5,6,7,8,9,10,11,12]
         self.remotestatuses_stopped=[0,1,2,13,14]
 
+        self.globalstopconsent=True
+
         self.temperatureplot=None # 'http://blabla/tempplot.png'
         self.dqmplots=[] # [('tabname','http://plotname','http://largeplotname.png'),...]
         self.scripts={
@@ -95,7 +97,7 @@ class H4GtkGui:
             'runnumber': 0,
             'spillnumber': 0,
             'evinrun': 0,
-            'evinspill': 0,
+            'evinspill': 1,
             'table_status': (0,0,'TAB_DONE'),
             'badspills': 0,
             'spillsize': 0,
@@ -226,7 +228,7 @@ class H4GtkGui:
                 self.remote[('status',node)]='DATATAKING'
             self.update_gui_statuscounters()
             if not oldstatus==self.remote[('status',node)]:
-                self.Log('Status change for '+str(node)+': '+str(oldstatus)+' -> '+str(self.remote[('status',node)]))
+#                self.Log('Status change for '+str(node)+': '+str(oldstatus)+' -> '+str(self.remote[('status',node)]))
                 if self.remote[('status',node)]=='ERROR':
                     self.set_alarm('Node %s in ERROR'%(node,),2)
                 if node=='RC':
@@ -363,8 +365,7 @@ class H4GtkGui:
         gobject.idle_add(self.define_sensitivity_runtext)
 
     def define_sensitivity_runtext(self):
-        if self.status['localstatus'] in ['STARTED','PAUSED','STOPPED']:
-            if self.confblock.r['run_number']==self.status['runnumber']:
+        if (self.status['localstatus'] in ['RUNNING','PAUSED','STOPPED']) and int(self.gm.get_object('runnumberspinbutton').get_value())==self.status['runnumber']:
                 self.gm.get_object('runtext').set_sensitive(True)
         else:
             self.gm.get_object('runtext').set_sensitive(False)
@@ -387,8 +388,9 @@ class H4GtkGui:
     # GtkEntry
     def set_gtkentry(self,button,value):
         out = ''
-        if value:
-            out=str(value)
+        myval=str(value)
+        if myval!='' and myval!='None':
+            out=myval
         button.set_text(out)
     def get_gtkentry(self,button):
         return button.get(text)
@@ -506,10 +508,14 @@ class H4GtkGui:
         rc=self.remote[('statuscode','RC')]
         if rc in self.remotestatuses_stopped:
             if self.status['localstatus'] in ['RUNNING','PAUSED']:
+                if not self.globalstopconsent:
+                    self.set_alarm('RUN STOPPED WITHOUT USER REQUEST',2)
                 self.gotostatus('STOPPED')
             else:
                 self.gotostatus('INIT')
+            self.globalstopconsent=True
         else:
+            self.globalstopconsent=False
             if not self.remote[('paused','RC')]:
                 self.gotostatus('RUNNING')
             else:
@@ -572,6 +578,9 @@ class H4GtkGui:
 
     def closerun(self):
         self.get_gui_confblock()
+        self.confblock.r['run_exit_code']=0 # IMPL
+        self.confblock.r['run_nevents']=self.remote[('evinrun','RC')]
+        self.confblock.r['run_deadtime']=self.status['deadtime']
         self.confblock=self.confdb.update_to_db(self.confblock)
         self.gotostatus('INIT')
 
@@ -613,6 +622,7 @@ class H4GtkGui:
         if self.status['localstatus']=='STOPPED':
             self.closerun()
         else:
+            self.globalstopconsent=True
             self.mywaiter.reset()
             self.mywaiter.set_layout('Do you want to stop?','Cancel','Yes',color='orange')
             self.mywaiter.set_exit_func(self.stoprun,[])

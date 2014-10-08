@@ -91,7 +91,7 @@ class DbInterface:
                 vals+=str().join(["%(",str(key),")s"])
         vals+=')'
         query+=vals
-        print query%dbclass
+#        print query%dbclass
         self.cursor.execute(query,dbclass)
 
     def update(self,dbclass,table,selection):
@@ -105,7 +105,7 @@ class DbInterface:
                 query+=str().join([str(key),"=%(",str(key),")s"])
         selection=selection.replace('=None','=NULL')
         query+=' %s' % (selection,)
-        print query%dbclass
+#        print query%dbclass
         self.cursor.execute(query,dbclass)
 
 
@@ -261,7 +261,7 @@ class DataTakingConfigHandler:
         self.db.cursor.execute('SELECT LAST_INSERT_ID()')
         for line in self.db.cursor:
             thisrunnr=int(line[0])
-        print 'last insert id = ',thisrunnr
+#        print 'last insert id = ',thisrunnr
         thisconf=self.read_from_db(runnr=thisrunnr)
         return thisconf
 
