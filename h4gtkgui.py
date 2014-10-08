@@ -129,7 +129,7 @@ class H4GtkGui:
             self.remote[('paused',node)]=0
 
         self.allbuttons=['createbutton','startbutton','pausebutton','stopbutton']
-        self.allrunblock=['runtypebutton','runnumberspinbutton','tablexspinbutton','tableyspinbutton',
+        self.allrunblock=['runtypebutton','runnumberspinbutton','tablexspinbutton','tableyspinbutton','movetablebutton',
                           'runstarttext','runstoptext','runtext','daqstringentry','pedfrequencyspinbutton',
                           'beamparticlebox','beamenergyentry','beamsigmaxentry','beamsigmayentry',
                           'beamintensityentry','beamtiltxentry','beamtiltyentry']
@@ -149,6 +149,7 @@ class H4GtkGui:
         self.set_spinbuttons_properties()
         self.mywaiter = waiter(self.gm)
         self.init_dqm_plots()
+        gobject.timeout_add(5000,self.update_dqm_plots)
 
         self.confdb = DataTakingConfigHandler()
         self.confblock = DataTakingConfig()
@@ -548,7 +549,7 @@ class H4GtkGui:
     def startrun(self):
         self.get_gui_confblock()
         if not self.table_is_ok(self.confblock.r['table_horizontal_position'],self.confblock.r['table_vertical_position']):
-            self.Log('Table condition does not allow to start run')
+            self.Log('Table condition does not allow to start run: have you forgotten to actually move the table?')
             return
         for key,node,val in [(a[0],a[1],b) for a,b in self.remote.iteritems()]:
             if key!='statuscode':
@@ -608,9 +609,6 @@ class H4GtkGui:
         self.createrun()
     def on_startbutton_clicked(self,*args):
         message = 'Do you want to start?'
-        self.get_gui_confblock()
-        if not self.table_is_ok(self.confblock.r['table_horizontal_position'],self.confblock.r['table_vertical_position']):
-            message+=' <b>TABLE WILL BE MOVED TO X=%s, Y=%s</b>'%(str(self.confblock.r['table_horizontal_position']),str(self.confblock.r['table_vertical_position']),)
         self.mywaiter.reset()
         self.mywaiter.set_layout(message,'Cancel','Start',color='green')
         self.mywaiter.set_exit_func(self.startrun,[])
@@ -710,7 +708,7 @@ class H4GtkGui:
             self.set_sens(self.allbuttons,False)
             self.set_sens(self.allrunblock,True)
             self.set_sens(['runnumberspinbutton','runstoptext'],False)
-            self.set_sens(['createbutton','startbutton'],True)
+            self.set_sens(['createbutton','startbutton','movetablebutton'],True)
             self.set_label('createbutton','CANCEL')
             self.set_label('startbutton','START RUN')
             self.set_label('pausebutton','PAUSE RUN')
@@ -756,12 +754,17 @@ class H4GtkGui:
             self.Log('ERROR: trying to move table while table is not stopped')
             return False
         if self.status['table_status']!=(newx,newy,'TAB_DONE'):
+            self.status['table_status'][2]='SENT_MOVE_ORDER'
             self.send_message('SET_TABLE_POSITION %s %s' % (newx,newy,))
         message='Waiting for table to move to '+str(newx)+' '+str(newy)
         self.mywaiter.reset()
         self.mywaiter.set_layout(message,None,'Force ACK table moving')
         self.mywaiter.set_condition(self.table_is_ok,[newx,newy])
         self.mywaiter.run()
+    def on_movetablebutton_clicked(self,*args):
+        x=self.gm.get_object('tablexspinbutton').get_value()
+        y=self.gm.get_object('tableyspinbutton').get_value()
+        self.set_table_position(x,y)
     def table_is_ok(self,newx,newy):
         if self.get_table_position()==(newx,newy,'TAB_DONE'):
             return True
@@ -882,7 +885,7 @@ class H4GtkGui:
                 tabnames.append(tabname)
                 scrw=scrollwin[tabname]
                 tab = gtk.Table(1,3,True)
-                scrw.add(tab)
+                scrw.add_with_viewport(tab)
                 myindex=0
             evtb = gtk.EventBox()
             imgb = gtk.Image()

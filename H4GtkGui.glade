@@ -1749,25 +1749,6 @@
       </object>
     </child>
   </object>
-  <object class="GtkWindow" id="PlotDisplayWindow">
-    <property name="can_focus">False</property>
-    <property name="title" translatable="yes">DQM plot display</property>
-    <property name="deletable">False</property>
-    <child>
-      <object class="GtkEventBox" id="imageeventbox">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <signal name="button-press-event" handler="on_imageeventbox_button_press_event" swapped="no"/>
-        <child>
-          <object class="GtkImage" id="imagelargedisplay">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="stock">gtk-missing-image</property>
-          </object>
-        </child>
-      </object>
-    </child>
-  </object>
   <object class="GtkDialog" id="WaitingWindow">
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
