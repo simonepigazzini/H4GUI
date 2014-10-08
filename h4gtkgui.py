@@ -135,6 +135,7 @@ class H4GtkGui:
         self.mainWindow = self.gm.get_object("MainWindow")
         self.mainWindow.set_position(gtk.WIN_POS_CENTER_ALWAYS)
         self.set_spinbuttons_properties()
+        self.mywaiter = waiter(self.gm)
 
         self.confdb = DataTakingConfigHandler()
         self.confblock = DataTakingConfig()
@@ -143,9 +144,6 @@ class H4GtkGui:
 
         self.gotostatus('INIT')
         self.mainWindow.show()
-
-        self.mywaiter = waiter(self.gm)
-
 
         self.aliveblinkstatus=False
         gobject.timeout_add(1000,self.change_color_blinkingalive)
@@ -531,6 +529,10 @@ class H4GtkGui:
         self.update_gui_confblock()
 
     def startrun(self):
+        self.get_gui_confblock()
+        if not self.table_is_ok(self.confblock.r['table_horizontal_position'],self.confblock.r['table_vertical_position']):
+            self.Log('Table condition does not allow to start run')
+            return
         for key,node,val in [(a[0],a[1],b) for a,b in self.remote.iteritems()]:
             if key!='statuscode':
                 continue
@@ -538,38 +540,20 @@ class H4GtkGui:
                 if val!=self.remotestatus_betweenruns:
                     self.Log('Node %s not ready for STARTRUN'%(str(node),))
                     return
-        self.get_gui_confblock()
         self.status['evinrun']=0
         self.confblock.d['daq_gitcommitid']=self.get_latest_commit()
         self.confblock=self.confdb.add_into_db(self.confblock)
         self.update_gui_confblock()
         self.Log('Sending START for run '+str(self.confblock.r['run_number']))
         self.send_message(str(' ').join([str(self.gui_out_messages['startrun']),str(self.confblock.r['run_number']),str(self.confblock.t['run_type_description']),str(self.confblock.t['ped_frequency'])]))        
-        self.mywaiter.reset()
-        self.mywaiter.set_layout('Waiting for transition to running status','Go back','Force transition')
-        self.mywaiter.set_condition(self.remstatus_is,[self.remotestatuses_running])
-        self.mywaiter.set_exit_func(self.gotostatus,['RUNNING'])
-        self.mywaiter.run()
- 
+
     def pauserun(self):
         if self.status['localstatus']=='RUNNING':
             self.Log('Sending PAUSE for run '+str(self.confblock.r['run_number']))
             self.send_message(self.gui_out_messages['pauserun'])
-            self.mywaiter.reset()
-            self.mywaiter.set_layout('Do you want to pause?','Go back','Force transition')
-            self.mywaiter.set_condition(self.remotecheckpaused,[True])
-            self.mywaiter.set_exit_func(self.gotostatus,['PAUSED'])
-            self.mywaiter.set_back_func(self.gotostatus,['RUNNING'])
-            self.mywaiter.run()
         else:
             self.Log('Sending RESUME for run '+str(self.confblock.r['run_number']))
             self.send_message(self.gui_out_messages['restartrun'])
-            self.mywaiter.reset()
-            self.mywaiter.set_layout('Do you want to resume?','Go back','Force transition')
-            self.mywaiter.set_condition(self.remotecheckpaused,[False])
-            self.mywaiter.set_exit_func(self.gotostatus,['RUNNING'])
-            self.mywaiter.set_back_func(self.gotostatus,['PAUSED'])
-            self.mywaiter.run()
 
     def remstatus_is(self,whichstatus):
         return (self.remote[('statuscode','RC')] in whichstatus)
@@ -582,11 +566,6 @@ class H4GtkGui:
         self.Log('Sending STOP for run '+str(self.confblock.r['run_number']))
         self.send_message(self.gui_out_messages['stoprun'])
         self.gui_go_to_runnr(self.status['runnumber'])
-        self.mywaiter.reset()
-        self.mywaiter.set_layout('Waiting for run to stop','Go back','Force transition')
-        self.mywaiter.set_condition(self.remstatus_is,[[self.remotestatus_betweenruns]])
-        self.mywaiter.set_exit_func(self.gotostatus,['STOPPED'])
-        self.mywaiter.run()
 
     def closerun(self):
         self.get_gui_confblock()
@@ -609,12 +588,14 @@ class H4GtkGui:
         self.createrun()
     def on_startbutton_clicked(self,*args):
         message = 'Do you want to start?'
+        self.get_gui_confblock()
         if not self.table_is_ok(self.confblock.r['table_horizontal_position'],self.confblock.r['table_vertical_position']):
             message+=' <b>TABLE WILL BE MOVED TO X=%s, Y=%s</b>'%(str(self.confblock.r['table_horizontal_position']),str(self.confblock.r['table_vertical_position']),)
         self.mywaiter.reset()
         self.mywaiter.set_layout(message,'Cancel','Start',color='green')
-        self.mywaiter.set_exit_func(self.set_table_position,[self.confblock.r['table_horizontal_position'],self.confblock.r['table_vertical_position'],self.startrun])
+        self.mywaiter.set_exit_func(self.startrun,[])
         self.mywaiter.run()
+
 
     def on_pausebutton_clicked(self,*args):
         if self.status['localstatus']=='RUNNING':
@@ -749,7 +730,7 @@ class H4GtkGui:
 # TABLE POSITION HANDLING
     def get_table_position(self):
         return self.status['table_status']
-    def set_table_position(self,newx,newy,exitfunc=None):
+    def set_table_position(self,newx,newy):
         if self.get_table_position()[2]!='TAB_DONE':
             self.Log('ERROR: trying to move table while table is not stopped')
             return False
@@ -759,8 +740,6 @@ class H4GtkGui:
         self.mywaiter.reset()
         self.mywaiter.set_layout(message,None,'Force ACK table moving')
         self.mywaiter.set_condition(self.table_is_ok,[newx,newy])
-        if exitfunc:
-            self.mywaiter.set_exit_func(exitfunc,[])
         self.mywaiter.run()
     def table_is_ok(self,newx,newy):
         if self.get_table_position()==(newx,newy,'TAB_DONE'):
@@ -931,9 +910,7 @@ class H4GtkGui:
     def run_script(self,script=None):
         if script==None or script=='':
             return
-        self.mywaiter.reset()
         self.mywaiter.set_layout('<b>Do you really want to run '+script+'?</b>','Cancel','Run')
-        self.mywaiter.set_condition(bool,[])
         self.mywaiter.set_exit_func(self.run_script_helper,[script])
     def run_script_helper(self,script=None):
         if self.status['localstatus']==RUNNING:
