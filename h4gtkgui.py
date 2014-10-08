@@ -74,18 +74,8 @@ class H4GtkGui:
         self.remotestatuses_running=[4,5,6,7,8,9,10,11,12]
         self.remotestatuses_stopped=[0,1,2,13,14]
 
-
-        self.imagenames={}
-        self.imagenames['image1']=''
-        self.imagenames['image2']=''
-        self.imagenames['image3']=''
-        self.imagenames['image4']=''
-        self.imagenames['image5']=''
-        self.imagenames['image6']=''
-        self.imagenames['image7']=''
-        self.imagenames['image8']=''
-        self.imagenames['image9']=''
-        
+        self.dqmplots=[] # [(tabname,plotname,largeplotname),...]
+        self.scripts={}
 
     def __init__(self):
 
@@ -203,6 +193,8 @@ class H4GtkGui:
         if (self.debug):
             newmsg=str(msg)
             self.Log(str(' ').join(('Processing message from',str(node),':',newmsg)))
+        if node in self.keepalive.keys():
+            self.keepalive[node]=True
         parts = msg.split(' ')
         if len(parts)<1:
             return
@@ -244,8 +236,6 @@ class H4GtkGui:
             self.flash_sps(str(parts[0])) #IMPL
         elif tit==self.gui_in_messages['tablepos']:
             self.status['table_position']=(float(parts[0]),float(parts[1]),str(parts[2]))
-            if node in self.keep.keys():
-                self.keepalive['table']=True
         elif tit==self.gui_in_messages['transfer']:
             if node=='EVTB':
                 for part in parts:
@@ -541,7 +531,7 @@ class H4GtkGui:
                     return
         self.get_gui_confblock()
         self.status['evinrun']=0
-        self.confblock.d['dat_gitcommitid']=self.get_latest_commit()
+        self.confblock.d['daq_gitcommitid']=self.get_latest_commit()
         self.confblock=self.confdb.add_into_db(self.confblock)
         self.update_gui_confblock()
         self.Log('Sending START for run '+str(self.confblock.r['run_number']))
@@ -841,22 +831,6 @@ class H4GtkGui:
         self.mywaiter.on_waitbutton2_clicked_(args)
 
 # PLOT DISPLAY WINDOW
-    def on_eventbox_image_button_press_event(self,mybox,*args):
-        self.show_plot_display(self.imagenames.get(gtk.Buildable.get_name(mybox.get_child()),None))
-    def show_plot_display(self,imagefile=None):
-        if imagefile==None or imagefile=='':
-            self.gm.get_object('PlotDisplayWindow').show()
-            return
-        myim=str(imagefile)
-        if myim.find('http://')!=-1:
-            newname='tmp_'+myim.split('/')[-1]
-            urllib.urlretrieve(myim,newname)
-            myim=newname
-        self.gm.get_object('imagelargedisplay').set_from_file(myim)
-        self.gm.get_object('PlotDisplayWindow').show()
-    def on_imageeventbox_button_press_event(self,*args):
-        self.gm.get_object('PlotDisplayWindow').hide()
-            
     def on_maxevtoggle_toggled(self,button,*args):
         if button.get_active():
             self.autostop_max_events=int(self.gm.get_object('maxeventry').get_text())
@@ -876,7 +850,7 @@ class H4GtkGui:
         self.status['laudatemp']=myenv2['lauda_temp_mon']
         return True
 
-    def get_latest_commit():
+    def get_latest_commit(self):
         p1 = Popen(['git','--work-tree=../H4DAQ','log','--pretty=format:\"%H\"'], stdout=PIPE)
         p2 = Popen(['head', '-n 1'], stdin=p1.stdout, stdout=PIPE)
         p1.stdout.close()
@@ -884,6 +858,64 @@ class H4GtkGui:
         output=output.replace('\n','')
         output=output.replace('\"','')
         return str(output)
+
+    def fill_dqm_plots(self):
+        nb = self.gm.get_object('dqmnotebook')
+        for tabname,plotname,largeplotname in self.dqmplots:
+            if tabname not in self.dqmplots_.keys():
+                nb.append_page(scrw,tabname)
+                self.dqmplots_[tabname]=[]
+            scrw = gtk.ScrolledWindow()
+            nb.append_page(scrw,label)
+            tab = gtk.Table(1,3,True)
+            evtb = gtk.EventBox()
+            imgb = gtk.Image()
+            imgb.set_from_file()
+            evtb.add(imgb)
+            if y>=int(tab.get_property('n-rows')):
+                tab.resize(y+1,3)
+            tab.attach(evtb,x,x+1,y,y+1)
+            self.dqmplots_[tabname].append(plotname)
+            handler_id = evtb.connect('button-press-event',self.on_dqm_plot_clicked,largeplotname)
+    def on_dqm_plot_clicked(self,imagefile=None):
+        if imagefile==None or imagefile=='':
+            self.gm.get_object('PlotDisplayWindow').show()
+            return
+        myim=str(imagefile)
+        if myim.find('http://')!=-1:
+            newname='tmp_'+myim.split('/')[-1]
+            urllib.urlretrieve(myim,newname)
+            myim=newname
+        self.gm.get_object('imagelargedisplay').set_from_file(myim)
+        self.gm.get_object('PlotDisplayWindow').show()
+    def on_imageeventbox_button_press_event(self,*args):
+        self.gm.get_object('PlotDisplayWindow').hide()
+
+    def on_syncclocksbutton_clicked(self,*args):
+        self.run_script(self.scripts.get('sync_clocks',None))
+    def on_freespacebutton_clicked(self,*args):
+        self.run_script(self.scripts.get('free_space',None))
+    def on_startdaemonsbutton_clicked(self,*args):
+        self.run_script(self.scripts.get('start_daemons',None))
+    def on_killdaemonsbutton_clicked(self,*args):
+        self.run_script(self.scripts.get('kill_daemons',None))
+
+
+    def run_script(self,script=None):
+        if script==None or script=='':
+            return
+        self.mywaiter.reset()
+        self.mywaiter.set_layout('<b>Do you really want to run '+script+'?</b>','Cancel','Run')
+        self.mywaiter.set_condition(bool,[])
+        self.mywaiter.set_exit_func(self.run_script_helper,[script])
+    def run_script_helper(self,script=None):
+        if self.status['localstatus']==RUNNING:
+            self.Log('Do not run scripts while taking data!')
+            return
+        self.Log('WARNING: executing '+script)
+        p1 = Popen(['bash',script], stdout=PIPE)
+        output = p2.communicate()[0]
+        self.Log(output)
 
 
 class waiter:
