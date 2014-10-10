@@ -9,6 +9,7 @@ import pygst
 import gst
 import datetime
 import urllib
+import webkit
 from subprocess import *
 from zmq import *
 from h4dbclasses import *
@@ -19,6 +20,7 @@ class H4GtkGui:
 
         self.debug=False
         self.activatesounds=False
+        self.sumptuous_browser=False
 
         self.pubsocket_bind_address='tcp://*:5566'
 
@@ -148,8 +150,14 @@ class H4GtkGui:
         self.mainWindow.set_position(gtk.WIN_POS_CENTER_ALWAYS)
         self.set_spinbuttons_properties()
         self.mywaiter = waiter(self.gm)
-        self.init_dqm_plots()
-        gobject.timeout_add(5000,self.update_dqm_plots)
+
+        if self.sumptuous_browser:
+            self.btabs=[]
+            BrowserTab(self.gm.get_object('dqmnotebook'),self.btabs,'http://www.google.com')
+            BrowserTab(self.gm.get_object('dqmnotebook'),self.btabs,'http://www.cern.ch')
+        else:
+            self.init_dqm_plots()
+            gobject.timeout_add(5000,self.update_dqm_plots)
 
         self.confdb = DataTakingConfigHandler()
         self.confblock = DataTakingConfig()
@@ -157,6 +165,7 @@ class H4GtkGui:
         self.start_network()
 
         self.gotostatus('INIT')
+        self.mainWindow.connect('destroy',gtk.main_quit)
         self.mainWindow.show_all()
 
         self.aliveblinkstatus=False
@@ -402,7 +411,7 @@ class H4GtkGui:
             out=myval
         button.set_text(out)
     def get_gtkentry(self,button):
-        return button.get(text)
+        return button.get_text()
 
     # GtkTextBuffer
     def get_text_from_textbuffer(self,bufname):
@@ -904,6 +913,7 @@ class H4GtkGui:
             myindex+=1
         self.update_dqm_plots()
 
+
     def update_dqm_plots(self):
         for tabname,plotname,largeplotname in self.dqmplots:
             self.locdqmplots[plotname]=self.geturlfile(plotname)
@@ -1034,10 +1044,69 @@ class waiter:
             self.dialog.hide()
             return False
 
+class BrowserTab:
+
+    def dropfirst(self,*args):
+        args[1](*(args[2:]))
+    def myloaduri(self,*args):
+        url = args[0].get_text()
+        if url.find('://')==-1:
+            url = 'http://'+url
+        args[1](url)
+    def barupdater(self,view,frame,request,action,decision,entry):
+        entry.set_text(request.get_uri())
+
+    def destroy(self,wid,nb,tablist,*args):
+        nb.remove_page(nb.get_current_page())
+        if nb.get_n_pages()==0:
+            BrowserTab(nb,tablist)
+        tablist.remove(self)
+        del self            
+
+    def __init__(self,nb,tablist,address=None):
+        
+        self.vbox = gtk.VBox()
+        self.hbox = gtk.HBox()
+        self.closebutton = gtk.Button('Close tab','gtk-close')
+        self.backbutton = gtk.Button('Back','gtk-go-back')
+        self.refreshbutton = gtk.Button('Refresh','gtk-refresh')
+        self.urlentry = gtk.Entry()
+        self.newtab = gtk.Button('New tab','gtk-add')
+
+        self.hbox.pack_start(self.closebutton,False,False)
+        self.hbox.pack_start(self.backbutton,False,False)
+        self.hbox.pack_start(self.urlentry)
+        self.hbox.pack_start(self.refreshbutton,False,False)
+        self.hbox.pack_start(self.newtab,False,False)
+        self.vbox.pack_start(self.hbox,False,False)
+
+        self.scrw = gtk.ScrolledWindow()
+        self.scrw.set_policy(gtk.POLICY_AUTOMATIC,gtk.POLICY_AUTOMATIC)
+        self.wv = webkit.WebView()
+        self.scrw.add_with_viewport(self.wv)
+        self.vbox.pack_start(self.scrw)
+
+        self.backbutton.connect('clicked',self.dropfirst,self.wv.go_back)
+        self.closebutton.connect('clicked',self.destroy,nb,tablist)
+        self.urlentry.connect('activate',self.myloaduri,self.wv.load_uri)
+        self.refreshbutton.connect('clicked',self.dropfirst,self.wv.reload)
+        self.newtab.connect('clicked',self.dropfirst,BrowserTab,nb,tablist)
+        self.wv.connect('navigation-policy-decision-requested',self.barupdater,self.urlentry)
+
+        self.lab = gtk.Label('Browser')
+        nb.append_page(self.vbox,self.lab)
+        nb.show_all()
+        nb.set_current_page(-1)
+        tablist.append(self)
+
+        if address:
+            self.wv.load_uri(address)
+
 
 # MAIN
 if __name__ == "__main__":
     mygui = H4GtkGui()
+    gtk.settings_get_default().props.gtk_button_images = True
     gtk.main()
 
 
