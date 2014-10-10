@@ -27,7 +27,7 @@ class H4GtkGui:
         self.nodes=[
             ('RC','tcp://pcethtb2.cern.ch:6002'),
             ('RO1','tcp://pcethtb1.cern.ch:6002'),
-            ('RO2','tcp://cms-h4-03:6002'),
+#            ('RO2','tcp://cms-h4-03:6002'),
             ('EVTB','tcp://pcethtb2.cern.ch:6502'),
 #            ('table','tcp://cms-h4-01:6999')
             ]
@@ -35,7 +35,7 @@ class H4GtkGui:
         self.keepalive={}
         self.keepalive['RC']=True
         self.keepalive['RO1']=True
-        self.keepalive['RO2']=True
+#        self.keepalive['RO2']=True
         self.keepalive['EVTB']=True
 #        self.keepalive['table']=True
 
@@ -80,6 +80,8 @@ class H4GtkGui:
         self.remotestatuses_stopped=[0,1,2,13,14]
 
         self.globalstopconsent=False
+        self.wanttostop=False
+        self.wanttopause=False
 
         self.temperatureplot=None # 'http://blabla/tempplot.png'
 #        self.dqmplots=[] # [('tabname','http://plotname','http://largeplotname.png'),...]
@@ -522,6 +524,12 @@ class H4GtkGui:
 
 
 # EXEC ACTIONS
+    def send_stop_pause_messages(self):
+        if rc in self.remotestatuses_running:
+            if self.wanttostop:
+                self.stoprun()
+            elif self.wanttopause:
+                self.pauserun()
     def processrccommand(self,command):
         rc=self.remote[('statuscode','RC')]
         if rc in self.remotestatuses_stopped:
@@ -578,7 +586,9 @@ class H4GtkGui:
         if self.status['localstatus']=='RUNNING':
             self.Log('Sending PAUSE for run '+str(self.confblock.r['run_number']))
             self.send_message(self.gui_out_messages['pauserun'])
-        else:
+
+    def resumerun(self):
+        if self.status['localstatus']=='PAUSED':
             self.Log('Sending RESUME for run '+str(self.confblock.r['run_number']))
             self.send_message(self.gui_out_messages['restartrun'])
 
@@ -632,7 +642,10 @@ class H4GtkGui:
             message = 'Do you want to resume?'
         self.mywaiter.reset()
         self.mywaiter.set_layout(message,'Cancel','Yes')
-        self.mywaiter.set_exit_func(self.pauserun,[])
+        if self.status['localstatus']=='RUNNING':
+            self.mywaiter.set_exit_func(self.set_true,[self.wanttopause])
+        elif self.status['localstatus']=='PAUSED':
+            self.mywaiter.set_exit_func(self.resumerun,[])
         self.mywaiter.run()
     def on_stopbutton_clicked(self,*args):
         if self.status['localstatus']=='STOPPED':
@@ -640,8 +653,11 @@ class H4GtkGui:
         else:
             self.mywaiter.reset()
             self.mywaiter.set_layout('Do you want to stop?','Cancel','Yes',color='orange')
-            self.mywaiter.set_exit_func(self.stoprun,[])
+            self.mywaiter.set_exit_func(self.set_true,[self.wanttostop])
             self.mywaiter.run()
+    def set_true(self,*args):
+        for arg in args:
+            arg = True
     def gui_go_to_runnr(self,newrunnr):
         if not self.confdb.run_exists(newrunnr):
             return False
