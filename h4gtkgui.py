@@ -91,10 +91,10 @@ class H4GtkGui:
             ('tab2','/home/cmsdaq/DAQ/H4GUI/plots/canv15.png','/home/cmsdaq/DAQ/H4GUI/plots/canv25.png')
             ]
         self.scripts={
-            'sync_clocks': None, #' /scripts/blabla.sh'
+            'sync_clocks': '../H4DAQ/scripts/syncclocks.sh',
             'free_space': None,
-            'start_daemons': None,
-            'kill_daemons': None
+            'start_daemons': '../H4DAQ/scripts/startall.sh -v3 --rc=pcethtb2 --eb=pcethtb2 --dr=pcethtb1,cms-h4-03',
+            'kill_daemons': '../H4DAQ/scripts/killall.sh'
         }
 
     def __init__(self):
