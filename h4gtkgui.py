@@ -106,7 +106,7 @@ class H4GtkGui:
             'runnumber': 0,
             'spillnumber': 0,
             'evinrun': 0,
-            'evinspill': 1,
+            'evinspill': 0,
             'table_status': (0,0,'TAB_DONE'),
             'badspills': 0,
             'spillsize': 0,
@@ -126,8 +126,6 @@ class H4GtkGui:
             self.remote[('runnumber',node)]=0
             self.remote[('spillnumber',node)]=0
             self.remote[('evinspill',node)]=0
-            self.remote[('gentriginspill',node)]=0
-            self.remote[('evinrun',node)]=0
             self.remote[('paused',node)]=0
 
         self.allbuttons=['createbutton','startbutton','pausebutton','stopbutton']
@@ -278,6 +276,8 @@ class H4GtkGui:
                         transferTime=val # in usec
                     elif key=='transrate_size':
                         transferSize=val # in bytes
+                    elif key=='evinrun':
+                        self.status['evinrun']=val
                 rate = float(transferSize)/1.048576/float(transferTime) # MB/s
                 self.status['spillsize']=float(transferSize)/1048576. # MB
                 self.status['transferRate']=rate
@@ -303,11 +303,6 @@ class H4GtkGui:
         self.status['runnumber']=self.remote[('runnumber','RC')]
         self.status['spillnumber']=self.remote[('spillnumber','RC')]
         self.status['evinspill']=self.remote[('evinspill','RC')]
-        self.status['evinrun']=self.remote[('evinrun','RC')]
-        if self.remote[('gentriginspill','RC')]>0:
-            self.status['deadtime']=100.*float(self.remote[('evinspill','RC')])/float(self.remote[('gentriginspill','RC')])
-        else:
-            self.status['deadtime']=100.
         if not self.gm.get_object('runstatuslabel').get_text().split(' ')[-1]==self.remote[('status','RC')]:
             self.gm.get_object('runstatuslabel').set_text(str(' ').join(('Run controller:',self.remote[('status','RC')])))
             self.flash_widget(self.gm.get_object('runstatusbox'),'green')
@@ -322,7 +317,6 @@ class H4GtkGui:
         self.gm.get_object('badspillslabel').set_text(str().join(['Nr. of bad spills: ',str(self.status['badspills'])]))
         self.gm.get_object('evinrunlabel').set_text(str().join(['Total #events in run: ',str(self.status['evinrun'])]))
         self.gm.get_object('evinspilllabel').set_text(str().join(['Nr. of events in spill: ',str(self.status['evinspill'])]))
-        self.gm.get_object('gentriglabel').set_text(str().join([ 'Dead time: %.2f'%(self.status['deadtime'],)      ,' %'      ]))
         self.gm.get_object('spillsizelabel').set_text(str().join(['Spill size (MB): ',str('%.1f'%(self.status['spillsize'],))]))
         self.gm.get_object('transfratelabel').set_text(str().join(['Transfer rate (MB/s): ',str('%.1f'%(self.status['transferRate'],))]))
         self.gm.get_object('spilldurationlabel').set_text(str().join(['Spill duration (s): ',str('%.3f'%(self.status['spillduration'],))]))
@@ -598,8 +592,7 @@ class H4GtkGui:
     def closerun(self):
         self.get_gui_confblock()
         self.confblock.r['run_exit_code']=0 # IMPL
-        self.confblock.r['run_nevents']=self.remote[('evinrun','RC')]
-        self.confblock.r['run_deadtime']=self.status['deadtime']
+        self.confblock.r['run_nevents']=self.status['evinrun']
         self.confblock=self.confdb.update_to_db(self.confblock)
         self.gotostatus('INIT')
 
