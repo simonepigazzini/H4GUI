@@ -337,6 +337,7 @@
                   <object class="GtkButton" id="freespacebutton">
                     <property name="label">Free disk space</property>
                     <property name="visible">True</property>
+                    <property name="sensitive">False</property>
                     <property name="can_focus">False</property>
                     <property name="receives_default">True</property>
                     <property name="use_action_appearance">False</property>
@@ -856,21 +857,6 @@
                                               </packing>
                                             </child>
                                             <child>
-                                              <object class="GtkLabel" id="gentriglabel">
-                                                <property name="visible">True</property>
-                                                <property name="can_focus">False</property>
-                                                <property name="label" translatable="yes">Dead time: 0 %</property>
-                                                <attributes>
-                                                  <attribute name="scale" value="1.2"/>
-                                                </attributes>
-                                              </object>
-                                              <packing>
-                                                <property name="expand">True</property>
-                                                <property name="fill">True</property>
-                                                <property name="position">1</property>
-                                              </packing>
-                                            </child>
-                                            <child>
                                               <object class="GtkLabel" id="trigratelabel">
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">False</property>
@@ -882,7 +868,7 @@
                                               <packing>
                                                 <property name="expand">True</property>
                                                 <property name="fill">True</property>
-                                                <property name="position">2</property>
+                                                <property name="position">1</property>
                                               </packing>
                                             </child>
                                           </object>
