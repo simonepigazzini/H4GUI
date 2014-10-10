@@ -20,7 +20,7 @@ class H4GtkGui:
 
         self.debug=False
         self.activatesounds=False
-        self.sumptuous_browser=False
+        self.sumptuous_browser=True
 
         self.pubsocket_bind_address='tcp://*:5566'
 
@@ -75,6 +75,7 @@ class H4GtkGui:
         self.remotestatus_betweenruns=2
         self.remotestatus_betweenspills=3
         self.remotestatus_endofspill=9
+        self.remotestatus_paused=11
         self.remotestatuses_datataking=[6,7,8]
         self.remotestatuses_running=[4,5,6,7,8,9,10,11,12]
         self.remotestatuses_stopped=[0,1,2,13,14]
@@ -95,7 +96,7 @@ class H4GtkGui:
         self.scripts={
             'sync_clocks': '../H4DAQ/scripts/syncclocks.sh',
             'free_space': None,
-            'start_daemons': '../H4DAQ/scripts/startall.sh -v3 --rc=pcethtb2 --eb=pcethtb2 --dr=pcethtb1,cms-h4-03',
+            'start_daemons': '../H4DAQ/scripts/startall.sh -v3 --rc=pcethtb2 --eb=pcethtb2 --dr=pcethtb1',
             'kill_daemons': '../H4DAQ/scripts/killall.sh'
         }
 
@@ -132,7 +133,7 @@ class H4GtkGui:
 
         self.allbuttons=['createbutton','startbutton','pausebutton','stopbutton']
         self.allrunblock=['runtypebutton','runnumberspinbutton','tablexspinbutton','tableyspinbutton','movetablebutton',
-                          'runstarttext','runstoptext','runtext','daqstringentry','pedfrequencyspinbutton',
+                          'runstarttext','runstoptext','showcomments','daqstringentry','pedfrequencyspinbutton',
                           'beamparticlebox','beamenergyentry','beamsigmaxentry','beamsigmayentry',
                           'beamintensityentry','beamtiltxentry','beamtiltyentry']
         self.playlevel=0
@@ -153,8 +154,7 @@ class H4GtkGui:
 
         if self.sumptuous_browser:
             self.btabs=[]
-            BrowserTab(self.gm.get_object('dqmnotebook'),self.btabs,'http://www.google.com')
-            BrowserTab(self.gm.get_object('dqmnotebook'),self.btabs,'http://www.cern.ch')
+            BrowserTab(self.gm.get_object('dqmnotebook'),self.btabs,'http://twiki.cern.ch')
         else:
             self.init_dqm_plots()
             gobject.timeout_add(5000,self.update_dqm_plots)
@@ -231,7 +231,7 @@ class H4GtkGui:
         tit = parts[0]
         parts = parts[1:]
         if tit==self.gui_in_messages['status']:
-            oldstatus=self.remote[('status',node)]
+#            oldstatus=self.remote[('status',node)]
             for part in parts:
                 if part.find('=')<0:
                     continue
@@ -245,12 +245,13 @@ class H4GtkGui:
             if self.remote[('statuscode',node)] in self.remotestatuses_datataking:
                 self.remote[('status',node)]='DATATAKING'
             self.update_gui_statuscounters()
-            if not oldstatus==self.remote[('status',node)]:
+#            if not oldstatus==self.remote[('status',node)]:
 #                self.Log('Status change for '+str(node)+': '+str(oldstatus)+' -> '+str(self.remote[('status',node)]))
-                if self.remote[('status',node)]=='ERROR':
-                    self.set_alarm('Node %s in ERROR'%(node,),2)
-                if node=='RC':
-                    self.processrccommand(self.remote[('status',node)])
+            if self.remote[('status',node)]=='ERROR':
+                self.set_alarm('Node %s in ERROR'%(node,),2)
+            if node=='RC':
+                self.processrccommand(self.remote[('status',node)])
+                self.send_stop_pause_messages()
         elif tit=='GUI_LOG':
             print 'GUI_LOG TO BE IMPLEMENTED'
 #            self.Log(str().join(['[',str(node),']: '].extend(parts)) #IMPL
@@ -376,14 +377,6 @@ class H4GtkGui:
             button.set_wrap(False)
         self.init_gtkcombobox(self.gm.get_object('runtypebutton'),['PHYSICS','PEDESTAL','LED'])
         self.init_gtkcombobox(self.gm.get_object('beamparticlebox'),['Electron','Positron','Pion','Muon'])
-        gobject.idle_add(self.define_sensitivity_runtext)
-
-    def define_sensitivity_runtext(self):
-        if (self.status['localstatus'] in ['RUNNING','PAUSED','STOPPED']) and int(self.gm.get_object('runnumberspinbutton').get_value())==self.status['runnumber']:
-                self.gm.get_object('runtext').set_sensitive(True)
-        else:
-            self.gm.get_object('runtext').set_sensitive(False)
-        return True
 
      # GtkComboBoxEntry (deprecated)
 #    def read_gtkcomboboxentry_string(self,button):
@@ -519,6 +512,7 @@ class H4GtkGui:
 
 # EXEC ACTIONS
     def send_stop_pause_messages(self):
+        rc=self.remote[('statuscode','RC')]
         if rc in self.remotestatuses_running:
             if self.wanttostop:
                 self.stoprun()
@@ -526,19 +520,16 @@ class H4GtkGui:
                 self.pauserun()
     def processrccommand(self,command):
         rc=self.remote[('statuscode','RC')]
-        if rc in self.remotestatuses_stopped:
+        if rc==self.remotestatus_paused and self.remote[('paused','RC')]==1:
+            self.gotostatus('PAUSED')
+        elif rc in self.remotestatuses_stopped:
             if self.status['localstatus'] in ['RUNNING','PAUSED']:
                 if not self.globalstopconsent:
                     self.set_alarm('RUN STOPPED WITHOUT USER REQUEST',2)
                 self.gotostatus('STOPPED')
                 self.globalstopconsent=False
-            else:
-                self.gotostatus('INIT')
         else:
-            if not self.remote[('paused','RC')]:
-                self.gotostatus('RUNNING')
-            else:
-                self.gotostatus('PAUSED')
+            self.gotostatus('RUNNING')
         if rc==self.remotestatus_endofspill:
             if self.autostop_max_events>0 and self.status['evinrun']>=self.autostop_max_events:
                 self.on_stopbutton_clicked()
@@ -578,6 +569,7 @@ class H4GtkGui:
 
     def pauserun(self):
         if self.status['localstatus']=='RUNNING':
+            self.wanttopause=False
             self.Log('Sending PAUSE for run '+str(self.confblock.r['run_number']))
             self.send_message(self.gui_out_messages['pauserun'])
 
@@ -591,6 +583,7 @@ class H4GtkGui:
 
     def stoprun(self):
         self.globalstopconsent=True
+        self.wanttostop=False
         self.autostop_max_events=-1
         self.gm.get_object('maxevtoggle').set_active(False)
         self.gm.get_object('maxevtoggle').modify_bg(gtk.STATE_NORMAL,None)
@@ -636,7 +629,7 @@ class H4GtkGui:
         self.mywaiter.reset()
         self.mywaiter.set_layout(message,'Cancel','Yes')
         if self.status['localstatus']=='RUNNING':
-            self.mywaiter.set_exit_func(self.set_true,[self.wanttopause])
+            self.mywaiter.set_exit_func(self.set_wanttopause,[])
         elif self.status['localstatus']=='PAUSED':
             self.mywaiter.set_exit_func(self.resumerun,[])
         self.mywaiter.run()
@@ -646,11 +639,12 @@ class H4GtkGui:
         else:
             self.mywaiter.reset()
             self.mywaiter.set_layout('Do you want to stop?','Cancel','Yes',color='orange')
-            self.mywaiter.set_exit_func(self.set_true,[self.wanttostop])
+            self.mywaiter.set_exit_func(self.set_wanttostop,[])
             self.mywaiter.run()
-    def set_true(self,*args):
-        for arg in args:
-            arg = True
+    def set_wanttostop(self,*args):
+        self.wanttostop=True
+    def set_wanttopause(self,*args):
+        self.wanttopause=True
     def gui_go_to_runnr(self,newrunnr):
         if not self.confdb.run_exists(newrunnr):
             return False
@@ -663,7 +657,7 @@ class H4GtkGui:
             isgood = self.gui_go_to_runnr(newnr)
             if not isgood:
                 self.Log('Run %s does not exist' % str(newnr))
-    def on_runtextbuffer_end_user_action(self,*args):
+    def save_runtextbuffer(self,*args):
         self.get_gui_confblock()
         if not self.confblock.r['run_number']==self.status['runnumber']:
             return
@@ -708,6 +702,9 @@ class H4GtkGui:
 # FSM
     def gotostatus(self,status):
 #        self.Log(str().join(['Local status:',self.status['localstatus'],'->',status]))
+        if not (self.status['localstatus'] in ['INIT','CREATED']):
+            if self.status['localstatus']==status:
+                return
         self.status['localstatus']=status
         if status=='INIT':
             self.confblock=self.confdb.read_from_db(runnr=self.confdb.get_highest_run_number())
@@ -736,6 +733,7 @@ class H4GtkGui:
             self.set_sens(self.allbuttons,False)
             self.set_sens(self.allrunblock,False)
             self.set_sens(['runnumberspinbutton'],True)
+            self.set_sens(['showcomments','runtext'],True)
             self.set_sens(['pausebutton','stopbutton'],True)
             self.set_label('createbutton','CREATE RUN')
             self.set_label('startbutton','START RUN')
@@ -746,6 +744,7 @@ class H4GtkGui:
             self.set_sens(self.allbuttons,False)
             self.set_sens(self.allrunblock,False)
             self.set_sens(['runnumberspinbutton'],True)
+            self.set_sens(['showcomments','runtext'],True)
             self.set_sens(['pausebutton','stopbutton'],True)
             self.set_label('createbutton','CREATE RUN')
             self.set_label('startbutton','START RUN')
@@ -755,6 +754,7 @@ class H4GtkGui:
         elif status=='STOPPED':
             self.set_sens(self.allbuttons,False)
             self.set_sens(self.allrunblock,False)
+            self.set_sens(['showcomments','runtext'],True)
             self.set_sens(['stopbutton'],True)
             self.set_sens(['runstoptext'],True)
             self.set_label('createbutton','CREATE RUN')
@@ -969,19 +969,31 @@ class H4GtkGui:
     def on_killdaemonsbutton_clicked(self,*args):
         self.run_script(self.scripts.get('kill_daemons',None))
 
+    def on_showcomments_clicked(self,*args):
+        if (self.status['localstatus'] in ['RUNNING','PAUSED','STOPPED']) and int(self.gm.get_object('runnumberspinbutton').get_value())==self.status['runnumber']:
+            self.gm.get_object('LogWindow').show()
+    def on_logwindowclose_clicked(self,*args):
+        self.gm.get_object('LogWindow').hide()
+        self.save_runtextbuffer()
 
     def run_script(self,script=None):
+        self.Log('Running script '+script)
         if script==None or script=='':
             return
+        self.mywaiter.reset()
         self.mywaiter.set_layout('<b>Do you really want to run '+script+'?</b>','Cancel','Run')
         self.mywaiter.set_exit_func(self.run_script_helper,[script])
+        self.mywaiter.run()
     def run_script_helper(self,script=None):
-        if self.status['localstatus']==RUNNING:
+        if self.status['localstatus']=='RUNNING':
             self.Log('Do not run scripts while taking data!')
             return
         self.Log('WARNING: executing '+script)
-        p1 = Popen(['bash',script], stdout=PIPE)
-        output = p2.communicate()[0]
+        line = ['bash']
+        for part in script.split(' '):
+            line.append(part)
+        p1 = Popen(line, stdout=PIPE)
+        output = p1.communicate()[0]
         self.Log(output)
 
 
