@@ -62,7 +62,6 @@ class H4GtkGui:
         self.remotestatus_betweenruns=2
         self.remotestatus_betweenspills=3
         self.remotestatus_endofspill=9
-        self.remotestatus_paused=11
         self.remotestatuses_datataking=[6,7,8]
         self.remotestatuses_running=[4,5,6,7,8,9,10,11,12]
         self.remotestatuses_stopped=[0,1,2,13,14]
@@ -502,7 +501,7 @@ class H4GtkGui:
             self.pauserun()
     def processrccommand(self,command):
         rc=self.remote[('statuscode','RC')]
-        if rc==self.remotestatus_paused and self.remote[('paused','RC')]==1:
+        if self.remote[('paused','RC')]==1:
             self.gotostatus('PAUSED')
         elif rc in self.remotestatuses_stopped:
             if self.status['localstatus'] in ['RUNNING','PAUSED']:
