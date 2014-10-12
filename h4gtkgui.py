@@ -487,7 +487,9 @@ class H4GtkGui:
         self.color_widget(widget,color)
         gobject.timeout_add(300,self.color_widget,widget,None,False)
     def flash_sps(self,signal):
-        self.flash_widget(self.gm.get_object(str(signal)+'box'),'orange')
+        my=signal
+        my+='box'
+        self.flash_widget(self.gm.get_object(my),'orange')
 
 
 # EXEC ACTIONS

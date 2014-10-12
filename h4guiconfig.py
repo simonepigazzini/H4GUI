@@ -17,12 +17,12 @@ def configure(self):
         #            ('table','tcp://cms-h4-01:6999')
         ]
 
-    self.keepalive={} # addresses of nodes to monitor
+    self.keepalive={} # nodes to monitor (comment to remove, never put False)
     self.keepalive['RC']=True
     self.keepalive['RO1']=True
-    self.keepalive['RO2']=False
+#    self.keepalive['RO2']=True
     self.keepalive['EVTB']=True
-    self.keepalive['table']=False
+#    self.keepalive['table']=True
 
     self.temperatureplot=None # 'http://blabla/tempplot.png' to be displayed for temperature history
 
