@@ -955,9 +955,9 @@ class H4GtkGui:
     def on_freespacebutton_clicked(self,*args):
         self.run_script(self.scripts.get('free_space',None))
     def on_startdaemonsbutton_clicked(self,*args):
-        self.run_script(self.scripts.get('start_daemons',None))
+        self.run_script(self.scripts.get('start_daemons',None),True)
     def on_killdaemonsbutton_clicked(self,*args):
-        self.run_script(self.scripts.get('kill_daemons',None))
+        self.run_script(self.scripts.get('kill_daemons',None),True)
 
     def on_showcomments_clicked(self,*args):
         if (self.status['localstatus'] in ['RUNNING','PAUSED','STOPPED']) and int(self.gm.get_object('runnumberspinbutton').get_value())==self.status['runnumber']:
@@ -966,18 +966,19 @@ class H4GtkGui:
         self.gm.get_object('LogWindow').hide()
         self.save_runtextbuffer()
 
-    def run_script(self,script=None):
-        self.Log('Running script '+script)
+    def run_script(self,script=None,alwaysallow=False):
+        self.Log('Requesting to run script '+script)
         if script==None or script=='':
             return
         self.mywaiter.reset()
         self.mywaiter.set_layout('<b>Do you really want to run '+script+'?</b>','Cancel','Run')
-        self.mywaiter.set_exit_func(self.run_script_helper,[script])
+        self.mywaiter.set_exit_func(self.run_script_helper,[script,alwaysallow])
         self.mywaiter.run()
-    def run_script_helper(self,script=None):
-        if self.status['localstatus']=='RUNNING':
-            self.Log('Do not run scripts while taking data!')
-            return
+    def run_script_helper(self,script=None,alwaysallow=False):
+        if not alwaysallow:
+            if self.status['localstatus']=='RUNNING':
+                self.Log('Script execution not allowed while taking data!')
+                return
         self.Log('WARNING: executing '+script)
         line = ['bash']
         for part in script.split(' '):
