@@ -8,6 +8,7 @@ import gobject
 import pygst
 import gst
 import datetime
+import time
 import urllib
 import webkit
 from subprocess import *
@@ -142,6 +143,11 @@ class H4GtkGui:
         gobject.idle_add(self.update_gui_statuscounters)
         gobject.timeout_add(500,self.update_temperature)
 
+        self.do_check_evinrun_increasing=False
+        self.old_evinrun=0
+        self.old_evinrun_lastcheck=time.time()
+        gobject.timeout_add(1000,self.check_evinrun_increasing)
+
 
 # NETWORKING
     def start_network(self):
@@ -174,6 +180,15 @@ class H4GtkGui:
             else:
                 self.unset_alarm('Lost connection with '+str(node))
             self.keepalive[node]=False
+        return True
+    def check_evinrun_increasing(self):
+        if self.do_check_evinrun_increasing and (time.time()-self.old_evinrun_lastcheck>60):
+            if not self.status['evinrun']>self.old_evinrun:
+                self.set_alarm('No events built in the last minute',1)
+            else:
+                self.unset_alarm('No events built in the last minute')
+            self.old_evinrun=self.status['evinrun']
+            self.old_evinrun_lastcheck=time.time()
         return True
     def send_message(self,msg,param='',forcereturn=None):
         mymsg=msg
@@ -210,8 +225,9 @@ class H4GtkGui:
             if self.remote[('statuscode',node)] in self.remotestatuses_datataking:
                 self.remote[('status',node)]='DATATAKING'
             self.update_gui_statuscounters()
-#            if not oldstatus==self.remote[('status',node)]:
-#                self.Log('Status change for '+str(node)+': '+str(oldstatus)+' -> '+str(self.remote[('status',node)]))
+            if self.debug:
+                if not oldstatus==self.remote[('status',node)]:
+                    self.Log('Status change for '+str(node)+': '+str(oldstatus)+' -> '+str(self.remote[('status',node)]))
             if self.remote[('status',node)]=='ERROR':
                 self.set_alarm('Node %s in ERROR'%(node,),2)
             if node=='RC':
@@ -491,6 +507,7 @@ class H4GtkGui:
             if self.status['localstatus'] in ['RUNNING','PAUSED']:
                 if not self.globalstopconsent:
                     self.set_alarm('RUN STOPPED WITHOUT USER REQUEST',2)
+                    self.confblock.r['run_exit_code']=1
                 self.gotostatus('STOPPED')
                 self.globalstopconsent=False
         else:
@@ -526,6 +543,7 @@ class H4GtkGui:
                     self.Log('Node %s not ready for STARTRUN'%(str(node),))
                     return
         self.status['evinrun']=0
+        self.confblock.r['run_exit_code']=0
         self.confblock.d['daq_gitcommitid']=self.get_latest_commit()
         self.confblock=self.confdb.add_into_db(self.confblock)
         self.update_gui_confblock()
@@ -559,7 +577,6 @@ class H4GtkGui:
 
     def closerun(self):
         self.get_gui_confblock()
-        self.confblock.r['run_exit_code']=0 # IMPL
         self.confblock.r['run_nevents']=self.status['evinrun']
         self.confblock=self.confdb.update_to_db(self.confblock)
         self.gotostatus('INIT')
@@ -666,9 +683,9 @@ class H4GtkGui:
 
 # FSM
     def gotostatus(self,status):
-#        self.Log(str().join(['Local status:',self.status['localstatus'],'->',status]))
-        if not (self.status['localstatus'] in ['INIT','CREATED']):
-            if self.status['localstatus']==status:
+        if self.debug:
+            self.Log(str().join(['Local status:',self.status['localstatus'],'->',status]))
+        if self.status['localstatus']==status:
                 return
         self.status['localstatus']=status
         if status=='INIT':
@@ -728,6 +745,14 @@ class H4GtkGui:
             self.set_label('stopbutton','CLOSE RUN')
             self.gm.get_object('runnumberspinbutton').set_visibility(True)
 
+        if status=='RUNNING':
+            self.do_check_evinrun_increasing=True
+            self.old_evinrun=0
+            self.old_evinrun_lastcheck=time.time()
+        else:
+            self.do_check_evinrun_increasing=False
+            self.old_evinrun=0
+            self.old_evinrun_lastcheck=time.time()
 
 # TABLE POSITION HANDLING
     def get_table_position(self):
