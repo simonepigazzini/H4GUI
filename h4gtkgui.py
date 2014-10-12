@@ -512,12 +512,12 @@ class H4GtkGui:
 
 # EXEC ACTIONS
     def send_stop_pause_messages(self):
-        rc=self.remote[('statuscode','RC')]
-        if rc in self.remotestatuses_running:
-            if self.wanttostop:
-                self.stoprun()
-            elif self.wanttopause:
-                self.pauserun()
+#        rc=self.remote[('statuscode','RC')]
+#        if rc in self.remotestatuses_running:
+        if self.wanttostop:
+            self.stoprun()
+        elif self.wanttopause:
+            self.pauserun()
     def processrccommand(self,command):
         rc=self.remote[('statuscode','RC')]
         if rc==self.remotestatus_paused and self.remote[('paused','RC')]==1:
