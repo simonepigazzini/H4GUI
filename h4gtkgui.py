@@ -36,6 +36,7 @@ class H4GtkGui:
             'status': 'STATUS',
             'log': 'GUI_LOG',
             'error': 'GUI_ERROR',
+            'sps': 'GUI_SPS',
             'tablepos': 'TABLE_IS',
             'transfer': 'TRANSFER',
             'spillduration': 'SPILLDURATION'
@@ -233,19 +234,18 @@ class H4GtkGui:
             if node=='RC':
                 self.processrccommand(self.remote[('status',node)])
                 self.send_stop_pause_messages()
-        elif tit=='GUI_LOG':
-            print 'GUI_LOG TO BE IMPLEMENTED'
-#            self.Log(str().join(['[',str(node),']: '].extend(parts)) #IMPL
-        elif tit=='GUI_ERROR':
-            print 'GUI_ERROR TO BE IMPLEMENTED'
-#            level = int(parts[0])
-#            parts=parts[1:]
-#            message=str().join(['[',str(node),' ERROR]: ']).extend(parts)
-#            self.Log(message)
-#            self.set_alarm(message,level)
-        elif tit=='GUI_SPS':
-            print 'GUI_SPS TO BE IMPLEMENTED'
-            self.flash_sps(str(parts[0])) #IMPL
+        elif tit==self.gui_in_messages['log']:
+            mymsg = 'Log from '+str(node)+':'
+            for p in parts:
+                mymsg+=' '+str(p)
+            self.Log(mymsg)
+        elif tit==self.gui_in_messages['error']:
+            lev = int(parts[0])
+            for p in parts[1:]:
+                mymsg+=' '+str(p)
+            self.set_alarm(mymsg,lev)
+        elif tit==self.gui_in_messages['sps']:
+            self.flash_sps(str(parts[0]))
         elif tit==self.gui_in_messages['tablepos']:
             self.status['table_position']=(float(parts[0]),float(parts[1]),str(parts[2]))
         elif tit==self.gui_in_messages['transfer']:
@@ -487,8 +487,7 @@ class H4GtkGui:
         self.color_widget(widget,color)
         gobject.timeout_add(300,self.color_widget,widget,None,False)
     def flash_sps(self,signal):
-        signal+='box'
-        self.flash_widget(self.gm.get_object(signal),'orange')
+        self.flash_widget(self.gm.get_object(str(signal)+'box'),'orange')
 
 
 # EXEC ACTIONS
