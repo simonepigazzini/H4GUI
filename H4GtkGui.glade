@@ -1445,7 +1445,7 @@
                                                           <object class="GtkLabel" id="label8">
                                                             <property name="visible">True</property>
                                                             <property name="can_focus">False</property>
-                                                            <property name="label" translatable="yes">   Ped. (Hz):</property>
+                                                            <property name="label" translatable="yes">   Ped. / spill:</property>
                                                           </object>
                                                           <packing>
                                                             <property name="expand">True</property>
