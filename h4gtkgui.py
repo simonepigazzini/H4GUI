@@ -237,6 +237,7 @@ class H4GtkGui:
             mymsg = 'Log from '+str(node)+':'
             for p in parts:
                 mymsg+=' '+str(p)
+            mymsg=mymsg.replace('\n','')
             self.Log(mymsg)
         elif tit==self.gui_in_messages['error']:
             lev = int(parts[0])
@@ -535,6 +536,10 @@ class H4GtkGui:
             self.Log('Table condition does not allow to start run: have you forgotten to actually move the table? Current situation:')
             self.Log(str(self.status['table_status']))
             return
+        if self.confblock.t['run_type_description'] in ['PEDESTAL','LED']:
+            if self.confblock.t['ped_frequency']==0:
+                self.Log('You have to set a number of triggers per spill different from 0 for PEDESTAL or LED runs (otherwise you would produce empty spills).')
+                return
         for key,node,val in [(a[0],a[1],b) for a,b in self.remote.iteritems()]:
             if key!='statuscode':
                 continue
