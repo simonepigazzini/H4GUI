@@ -520,6 +520,8 @@ class H4GtkGui:
                 if not self.globalstopconsent:
                     self.set_alarm('RUN STOPPED WITHOUT USER REQUEST',2)
                     self.confblock.r['run_exit_code']=1
+                else:
+                    self.confblock.r['run_exit_code']=0
                 self.gotostatus('STOPPED')
                 self.globalstopconsent=False
         else:
@@ -559,7 +561,6 @@ class H4GtkGui:
                     self.Log('Node %s not ready for STARTRUN'%(str(node),))
                     return
         self.status['evinrun']=0
-        self.confblock.r['run_exit_code']=0
         self.confblock.d['daq_gitcommitid']=self.get_latest_commit()
         self.confblock=self.confdb.add_into_db(self.confblock)
         self.update_gui_confblock()
@@ -600,13 +601,13 @@ class H4GtkGui:
 # PROCESS SIGNALS
     def on_buttonquit_clicked(self,*args):
         self.mywaiter.reset()
-        self.mywaiter.set_layout('Do you want to quit the GUI?','Cancel','Yes',color='yellow')
+        self.mywaiter.set_layout('Do you want to quit the GUI?','Cancel','Yes',color='orange')
         self.mywaiter.set_exit_func(gtk.main_quit,[])
         self.mywaiter.run()        
     def on_quitbuttonRC_clicked(self,*args):
         self.Log("Request to quit run controller from GUI user")
         self.mywaiter.reset()
-        self.mywaiter.set_layout('<b>Do you want to quit the DAQ?</b>','Cancel','Yes',color='red')
+        self.mywaiter.set_layout('<b>Do you want to quit the DAQ?</b>','Cancel','Yes',color='orange')
         self.mywaiter.set_exit_func(self.send_message,[self.gui_out_messages['die']])
         self.mywaiter.run()        
     def on_createbutton_clicked(self,*args):
@@ -625,7 +626,7 @@ class H4GtkGui:
         elif self.status['localstatus']=='PAUSED':
             message = 'Do you want to resume?'
         self.mywaiter.reset()
-        self.mywaiter.set_layout(message,'Cancel','Yes')
+        self.mywaiter.set_layout(message,'Cancel','Yes',color='orange')
         if self.status['localstatus']=='RUNNING':
             self.mywaiter.set_exit_func(self.set_wanttopause,[])
         elif self.status['localstatus']=='PAUSED':
@@ -790,7 +791,7 @@ class H4GtkGui:
             self.send_message('SET_TABLE_POSITION %s %s' % (newx,newy,))
         message='Waiting for table to move to '+str(newx)+' '+str(newy)
         self.mywaiter.reset()
-        self.mywaiter.set_layout(message,None,'Force ACK table moving')
+        self.mywaiter.set_layout(message,None,'Force ACK table moving',color='green')
         self.mywaiter.set_condition(self.table_is_ok,[newx,newy])
         self.mywaiter.run()
     def on_movetablebutton_clicked(self,*args):
@@ -995,7 +996,7 @@ class H4GtkGui:
         if script==None or script=='':
             return
         self.mywaiter.reset()
-        self.mywaiter.set_layout('<b>Do you really want to run '+script+'?</b>','Cancel','Run')
+        self.mywaiter.set_layout('<b>Do you really want to run '+script+'?</b>','Cancel','Run',color='orange')
         self.mywaiter.set_exit_func(self.run_script_helper,[script,alwaysallow])
         self.mywaiter.run()
     def run_script_helper(self,script=None,alwaysallow=False):
