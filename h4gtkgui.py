@@ -37,7 +37,9 @@ class H4GtkGui:
             'log': 'GUI_LOG',
             'error': 'GUI_ERROR',
             'sps': 'GUI_SPS',
-            'tablepos': 'TABLE_IS',
+            'tablepos': 'TAB_IS',
+            'tablemoving': 'TAB_MOVING',
+            'tabledone': 'TAB_DONE',
             'transfer': 'TRANSFER',
             'spillduration': 'SPILLDURATION'
             }
@@ -211,7 +213,7 @@ class H4GtkGui:
         tit = parts[0]
         parts = parts[1:]
         if tit==self.gui_in_messages['status']:
-#            oldstatus=self.remote[('status',node)]
+            oldstatus=self.remote[('status',node)]
             for part in parts:
                 if part.find('=')<0:
                     continue
@@ -247,7 +249,17 @@ class H4GtkGui:
         elif tit==self.gui_in_messages['sps']:
             self.flash_sps(str(parts[0]))
         elif tit==self.gui_in_messages['tablepos']:
-            self.status['table_position']=(float(parts[0]),float(parts[1]),str(parts[2]))
+            print tit,parts
+            self.status['table_status']=(float(parts[0]),float(parts[1]),self.status['table_status'][2])
+            print  self.status['table_status']
+        elif tit==self.gui_in_messages['tablemoving']:
+            print tit,parts
+            self.status['table_status']=(self.status['table_status'][0],self.status['table_status'][1],"TAB_MOVING")
+            print  self.status['table_status']
+        elif tit==self.gui_in_messages['tabledone']:
+            print tit,parts
+            self.status['table_status']=(self.status['table_status'][0],self.status['table_status'][1],"TAB_DONE")
+            print  self.status['table_status']
         elif tit==self.gui_in_messages['transfer']:
             if node=='EVTB':
                 for part in parts:
@@ -763,12 +775,14 @@ class H4GtkGui:
     def get_table_position(self):
         return self.status['table_status']
     def set_table_position(self,newx,newy):
+        print 'table pos before set'
+        print self.status['table_status']
         if self.get_table_position()[2]!='TAB_DONE':
             self.Log('ERROR: trying to move table while table is not stopped')
             return False
         if self.status['table_status']!=(newx,newy,'TAB_DONE'):
             self.status['table_status']=(self.status['table_status'][0],self.status['table_status'][1],'SENT_MOVE_ORDER')
-#            self.send_message('SET_TABLE_POSITION %s %s' % (newx,newy,)) #SAFETY
+            self.send_message('SET_TABLE_POSITION %s %s' % (newx,newy,))
         message='Waiting for table to move to '+str(newx)+' '+str(newy)
         self.mywaiter.reset()
         self.mywaiter.set_layout(message,None,'Force ACK table moving')
