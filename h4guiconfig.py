@@ -40,7 +40,7 @@ def configure(self):
     self.scripts={ # scripts linked to GUI buttons
         'sync_clocks': '../H4DAQ/scripts/syncclocks.sh',
         'free_space': None,
-        'start_daemons': '../H4DAQ/scripts/startall.sh -v3 --rc=pcethtb2 --eb=pcethtb2 --dr=pcethtb1',
+        'start_daemons': '../H4DAQ/scripts/startall.sh -v3 --rc=pcethtb2 --eb=pcethtb2 --dr=pcethtb1,cms-h4-03',
         'kill_daemons': '../H4DAQ/scripts/killall.sh'
         }
 
