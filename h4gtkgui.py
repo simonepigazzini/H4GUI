@@ -100,7 +100,7 @@ class H4GtkGui:
             self.remote[('paused',node)]=0
 
         self.allbuttons=['createbutton','startbutton','pausebutton','stopbutton']
-        self.allrunblock=['runtypebutton','runnumberspinbutton','tablexspinbutton','tableyspinbutton','movetablebutton',
+        self.allrunblock=['runtypebutton','runnumberspinbutton','tablexspinbutton','tableyspinbutton','movetablebutton','filltableposbutton',
                           'runstarttext','runstoptext','showcomments','daqstringentry','pedfrequencyspinbutton',
                           'beamparticlebox','beamenergyentry','beamsigmaxentry','beamsigmayentry',
                           'beamintensityentry','beamtiltxentry','beamtiltyentry']
@@ -249,17 +249,12 @@ class H4GtkGui:
         elif tit==self.gui_in_messages['sps']:
             self.flash_sps(str(parts[0]))
         elif tit==self.gui_in_messages['tablepos']:
-            print tit,parts
             self.status['table_status']=(float(parts[0]),float(parts[1]),self.status['table_status'][2])
-            print  self.status['table_status']
+            self.gm.get_object('tableposlabel').set_text('Table pos. (mm): %.2f / %.2f / %s'%(self.status['table_status'][0],self.status['table_status'][1],self.status['table_status'][2],))
         elif tit==self.gui_in_messages['tablemoving']:
-            print tit,parts
             self.status['table_status']=(self.status['table_status'][0],self.status['table_status'][1],"TAB_MOVING")
-            print  self.status['table_status']
         elif tit==self.gui_in_messages['tabledone']:
-            print tit,parts
             self.status['table_status']=(self.status['table_status'][0],self.status['table_status'][1],"TAB_DONE")
-            print  self.status['table_status']
         elif tit==self.gui_in_messages['transfer']:
             if node=='EVTB':
                 for part in parts:
@@ -365,10 +360,11 @@ class H4GtkGui:
         for button in tablebuttons:
             button.set_value(0)
             button.set_numeric(True)
-            button.set_increments(0.1,1)
+            button.set_increments(0.10,1)
             button.set_range(-1000,1000)
             button.set_wrap(False)
         self.init_gtkcombobox(self.gm.get_object('runtypebutton'),['PHYSICS','PEDESTAL','LED'])
+        self.init_gtkcombobox(self.gm.get_object('filltableposbutton'),[None]+self.tableposdictionary.keys())
         self.init_gtkcombobox(self.gm.get_object('beamparticlebox'),['Electron','Positron','Pion','Muon'])
 
      # GtkComboBoxEntry (deprecated)
@@ -428,8 +424,10 @@ class H4GtkGui:
 
 
 # ALARMS
-    def Log(self,mytext):
-        mytext_=str(' ').join((datetime.datetime.now().strftime('%d.%m.%y %H:%M:%S'),mytext))
+    def Log(self,*args):
+        mytext_=datetime.datetime.now().strftime('%d.%m.%y %H:%M:%S')
+        for arg in args:
+            mytext_+=' '+str(arg)
         mybuffer=self.gm.get_object('rclogbuffer')
         mybuffer.insert(mybuffer.get_end_iter(),str(mytext_)+'\n')
     def on_rclogview_size_allocate(self,*args):
@@ -662,6 +660,14 @@ class H4GtkGui:
             return
         self.confblock=self.confdb.update_to_db(self.confblock,onlycomment=True)
 
+    def on_filltableposbutton_changed(self,wid,*args):
+        pos = self.tableposdictionary.get(self.read_gtkcombobox_status(wid),None)
+        if pos==None:
+            return
+        x,y = pos
+        self.set_gtkentry(self.gm.get_object('tablexspinbutton'),x)
+        self.set_gtkentry(self.gm.get_object('tableyspinbutton'),y)
+
 # DATATAKINGCONFIG MANIPULATION
     def update_gui_confblock(self):
         self.set_gtkcombobox_entry(self.gm.get_object('runtypebutton'),self.confblock.t['run_type_description'])
@@ -775,8 +781,6 @@ class H4GtkGui:
     def get_table_position(self):
         return self.status['table_status']
     def set_table_position(self,newx,newy):
-        print 'table pos before set'
-        print self.status['table_status']
         if self.get_table_position()[2]!='TAB_DONE':
             self.Log('ERROR: trying to move table while table is not stopped')
             return False

@@ -918,6 +918,21 @@
                                                 <property name="position">1</property>
                                               </packing>
                                             </child>
+                                            <child>
+                                              <object class="GtkLabel" id="tableposlabel">
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">False</property>
+                                                <property name="label" translatable="yes">Table pos. (mm): 0 / 0 / TAB_DONE</property>
+                                                <attributes>
+                                                  <attribute name="scale" value="1.2"/>
+                                                </attributes>
+                                              </object>
+                                              <packing>
+                                                <property name="expand">True</property>
+                                                <property name="fill">True</property>
+                                                <property name="position">2</property>
+                                              </packing>
+                                            </child>
                                           </object>
                                           <packing>
                                             <property name="expand">True</property>
@@ -1207,7 +1222,7 @@
                                                         <property name="can_focus">True</property>
                                                         <property name="invisible_char">●</property>
                                                         <property name="invisible_char_set">True</property>
-                                                        <property name="digits">1</property>
+                                                        <property name="digits">2</property>
                                                         <property name="numeric">True</property>
                                                       </object>
                                                       <packing>
@@ -1246,7 +1261,7 @@
                                                         <property name="can_focus">True</property>
                                                         <property name="invisible_char">●</property>
                                                         <property name="invisible_char_set">True</property>
-                                                        <property name="digits">1</property>
+                                                        <property name="digits">2</property>
                                                         <property name="numeric">True</property>
                                                       </object>
                                                       <packing>
@@ -1275,6 +1290,18 @@
                                                     <property name="expand">True</property>
                                                     <property name="fill">True</property>
                                                     <property name="position">4</property>
+                                                  </packing>
+                                                </child>
+                                                <child>
+                                                  <object class="GtkComboBox" id="filltableposbutton">
+                                                    <property name="visible">True</property>
+                                                    <property name="can_focus">False</property>
+                                                    <signal name="changed" handler="on_filltableposbutton_changed" swapped="no"/>
+                                                  </object>
+                                                  <packing>
+                                                    <property name="expand">True</property>
+                                                    <property name="fill">True</property>
+                                                    <property name="position">5</property>
                                                   </packing>
                                                 </child>
                                               </object>

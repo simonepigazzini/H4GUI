@@ -44,3 +44,7 @@ def configure(self):
         'kill_daemons': '../H4DAQ/scripts/killall.sh'
         }
 
+    self.tableposdictionary={
+        'HOME': (0.00,0.00),
+        'TEST': (1.00,1.00)
+        }
