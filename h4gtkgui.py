@@ -250,7 +250,7 @@ class H4GtkGui:
             self.flash_sps(str(parts[0]))
         elif tit==self.gui_in_messages['tablepos']:
             self.status['table_status']=(float(parts[0]),float(parts[1]),self.status['table_status'][2])
-            self.gm.get_object('tableposlabel').set_text('Table pos. (mm): %.2f / %.2f / %s'%(self.status['table_status'][0],self.status['table_status'][1],self.status['table_status'][2],))
+            self.gm.get_object('tableposlabel').set_text('Table pos. (mm): %.2f / %.2f / %s'%(self.status['table_status'][0],self.status['table_status'][1],self.status['table_status'][2].replace('TAB_',''),))
         elif tit==self.gui_in_messages['tablemoving']:
             self.status['table_status']=(self.status['table_status'][0],self.status['table_status'][1],"TAB_MOVING")
         elif tit==self.gui_in_messages['tabledone']:

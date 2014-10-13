@@ -887,7 +887,6 @@
                                           <object class="GtkHBox" id="hbox12">
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
-                                            <property name="homogeneous">True</property>
                                             <child>
                                               <object class="GtkLabel" id="badspillslabel">
                                                 <property name="visible">True</property>
@@ -922,7 +921,7 @@
                                               <object class="GtkLabel" id="tableposlabel">
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">False</property>
-                                                <property name="label" translatable="yes">Table pos. (mm): 0 / 0 / TAB_DONE</property>
+                                                <property name="label" translatable="yes">Table pos. (mm): 0 / 0 / UNKNOWN</property>
                                                 <attributes>
                                                   <attribute name="scale" value="1.2"/>
                                                 </attributes>
