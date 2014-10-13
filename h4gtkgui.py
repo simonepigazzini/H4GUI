@@ -120,7 +120,7 @@ class H4GtkGui:
 
         if self.sumptuous_browser:
             self.btabs=[]
-            BrowserTab(self.gm.get_object('dqmnotebook'),self.btabs,'http://twiki.cern.ch')
+            BrowserTab(self.gm.get_object('dqmnotebook'),self.btabs,'http://pcethtb3.cern.ch/DQM')
         else:
             self.init_dqm_plots()
             gobject.timeout_add(5000,self.update_dqm_plots)
