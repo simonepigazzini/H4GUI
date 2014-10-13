@@ -95,7 +95,7 @@ class BrowserTab:
 
     def destroy(self,wid,nb,tablist,*args):
         nb.remove_page(nb.get_current_page())
-        if nb.get_n_pages()==0:
+        if nb.get_n_pages()==1: # tab 0 is webcam viewer
             BrowserTab(nb,tablist)
         tablist.remove(self)
         del self            

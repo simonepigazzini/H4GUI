@@ -150,6 +150,7 @@ class H4GtkGui:
         self.old_evinrun_lastcheck=time.time()
         gobject.timeout_add(1000,self.check_evinrun_increasing)
 
+        self.videostream()
 
 # NETWORKING
     def start_network(self):
@@ -1012,8 +1013,40 @@ class H4GtkGui:
 
 
 
+    def videostream(self):
+
+        nb = self.gm.get_object('dqmnotebook')
+        self.webcamarea = gtk.DrawingArea()
+        nb.prepend_page(self.webcamarea,gtk.Label('Webcam'))
+        nb.show_all()
+
+        self.player = gst.parse_launch('souphttpsrc location=http://axisminn02/mjpg/video.mjpg ! decodebin2 ! xvimagesink')
+        self.player.set_state(gst.STATE_PLAYING)
+        bus = self.player.get_bus()
+        bus.add_signal_watch()
+        bus.connect("message", self.deal_with_message)
+        bus.enable_sync_message_emission()
+        bus.connect("sync-message::element", self.sync_message)
+
+    def deal_with_message(self, bus, message):
+        return
+        if message.type in [gst.MESSAGE_EOS,gst.MESSAGE_ERROR]:
+            self.video_player.set_state(gst.STATE_NULL)
+                    
+    def sync_message(self, bus, message):
+        if message.structure is None:
+            return
+        message_name = message.structure.get_name()
+        if message_name == "prepare-xwindow-id":
+            imagesink = message.src
+            imagesink.set_property("force-aspect-ratio", True)
+            imagesink.set_xwindow_id(self.webcamarea.window.xid)
+
+
+
 # MAIN
 if __name__ == "__main__":
+    gobject.threads_init()
     mygui = H4GtkGui()
     gtk.settings_get_default().props.gtk_button_images = True
     gtk.main()
