@@ -150,7 +150,7 @@ class H4GtkGui:
         self.old_evinrun_lastcheck=time.time()
         gobject.timeout_add(1000,self.check_evinrun_increasing)
 
-        self.videostream()
+#        self.videostream()
 
 # NETWORKING
     def start_network(self):
