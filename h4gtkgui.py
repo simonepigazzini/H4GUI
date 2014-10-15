@@ -79,6 +79,7 @@ class H4GtkGui:
             'evinrun': 0,
             'evinspill': 0,
             'table_status': (0,0,'TAB_DONE'),
+            'eventsmerged': 0,
             'badspills': 0,
             'spillsize': 0,
             'transferRate': 0,
@@ -150,7 +151,7 @@ class H4GtkGui:
         self.old_evinrun_lastcheck=time.time()
         gobject.timeout_add(1000,self.check_evinrun_increasing)
 
-#        self.videostream()
+        self.videostream()
 
 # NETWORKING
     def start_network(self):
@@ -264,6 +265,8 @@ class H4GtkGui:
                     key,val=part.split('=')
                     if key=='badspills':
                         self.status[key]=int(val)
+                    if key=='eventsmerged':
+                        self.status[key]=int(val)
                     elif key=='transferTime':
                         transferTime=val # in usec
                     elif key=='transrate_size':
@@ -307,6 +310,7 @@ class H4GtkGui:
         self.gm.get_object('runnumberlabel').set_text(str().join(['Run number: ',str(self.status['runnumber'])]))
         self.gm.get_object('spillnumberlabel').set_text(str().join(['Spill number: ',str(self.status['spillnumber'])]))
         self.gm.get_object('badspillslabel').set_text(str().join(['Nr. of bad spills: ',str(self.status['badspills'])]))
+        self.gm.get_object('mergedevlabel').set_text(str().join(['Merged ev. in spill: ',str(self.status['eventsmerged'])]))
         self.gm.get_object('evinrunlabel').set_text(str().join(['Total #events in run: ',str(self.status['evinrun'])]))
         self.gm.get_object('evinspilllabel').set_text(str().join(['Nr. of events in spill: ',str(self.status['evinspill'])]))
         self.gm.get_object('spillsizelabel').set_text(str().join(['Spill size (MB): ',str('%.1f'%(self.status['spillsize'],))]))
