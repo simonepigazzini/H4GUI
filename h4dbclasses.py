@@ -193,14 +193,14 @@ class EnvironmentDbClass(AbsDbClass):
                 ('Humidity','float'),
                 ('DewPoint','float')
                 ])
-class LaudaDbClass(AbsDbClass):
+class ChillerDbClass(AbsDbClass):
     def __init__(self):
-        super(LaudaDbClass,self).__init__([
-                ('lauda_id','int'),
-                ('lauda_time','str'),
-                ('lauda_status','int'),
-                ('lauda_temp_set','float'),
-                ('lauda_temp_mon','float')
+        super(ChillerDbClass,self).__init__([
+                ('chil_readout_id','int'),
+                ('chil_timestamp','str'),
+                ('chil_treq','float'),
+                ('chil_tset','float'),
+                ('chil_tmon','float')
                 ])
         
 class DataTakingConfig:
@@ -317,8 +317,8 @@ class DataTakingConfigHandler:
         target.fixdatatypes()
         return target
 
-    def get_latest_laudareading(self):
-        target=LaudaDbClass()
-        target=self.getfirstsafe(self.db.read(target,'lauda','order by lauda_id desc limit 1')) or LaudaDbClass()
+    def get_latest_chillerreading(self):
+        target=ChillerDbClass()
+        target=self.getfirstsafe(self.db.read(target,'Chiller','order by chil_readout_id desc limit 1')) or ChillerDbClass()
         target.fixdatatypes()
         return target

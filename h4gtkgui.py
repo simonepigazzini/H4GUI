@@ -150,7 +150,7 @@ class H4GtkGui:
         self.old_evinrun_lastcheck=time.time()
         gobject.timeout_add(1000,self.check_evinrun_increasing)
 
-#        self.videostream()
+        self.videostream()
 
 # NETWORKING
     def start_network(self):
@@ -891,8 +891,8 @@ class H4GtkGui:
         self.status['temperatures']=[myenv['T1'],myenv['T2'],myenv['T3'],myenv['T4'],myenv['T5']]
         self.status['humidity']=myenv['Humidity']
         self.status['dewpoint']=myenv['DewPoint']
-        myenv2 = self.confdb.get_latest_laudareading()
-        self.status['laudatemp']=myenv2['lauda_temp_mon']
+        myenv2 = self.confdb.get_latest_chillerreading()
+        self.status['laudatemp']=myenv2['chil_tmon']
         return True
 
     def get_latest_commit(self):
@@ -1015,39 +1015,42 @@ class H4GtkGui:
 
 
     def videostream(self):
-
+        gtk.gdk.threads_enter()
         nb = self.gm.get_object('dqmnotebook')
         self.webcamarea = gtk.DrawingArea()
         nb.prepend_page(self.webcamarea,gtk.Label('Webcam'))
         nb.show_all()
-
         self.player = gst.parse_launch('souphttpsrc location=http://axisminn02/mjpg/video.mjpg ! decodebin2 ! xvimagesink')
-        self.player.set_state(gst.STATE_PLAYING)
         bus = self.player.get_bus()
         bus.add_signal_watch()
         bus.connect("message", self.deal_with_message)
         bus.enable_sync_message_emission()
         bus.connect("sync-message::element", self.sync_message)
+        self.player.set_state(gst.STATE_PLAYING)
+        gtk.gdk.threads_leave()
 
     def deal_with_message(self, bus, message):
-        return
+        gtk.gdk.threads_enter()
         if message.type in [gst.MESSAGE_EOS,gst.MESSAGE_ERROR]:
             self.video_player.set_state(gst.STATE_NULL)
-                    
+        gtk.gdk.threads_leave()
+
     def sync_message(self, bus, message):
         if message.structure is None:
             return
+        gtk.gdk.threads_enter()
         message_name = message.structure.get_name()
         if message_name == "prepare-xwindow-id":
             imagesink = message.src
             imagesink.set_property("force-aspect-ratio", True)
             imagesink.set_xwindow_id(self.webcamarea.window.xid)
-
+        gtk.gdk.threads_leave()
 
 
 # MAIN
 if __name__ == "__main__":
     gobject.threads_init()
+    gtk.gdk.threads_init()
     mygui = H4GtkGui()
     gtk.settings_get_default().props.gtk_button_images = True
     gtk.main()
