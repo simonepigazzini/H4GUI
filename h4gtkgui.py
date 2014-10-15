@@ -187,8 +187,10 @@ class H4GtkGui:
         return True
     def check_evinrun_increasing(self):
         if self.do_check_evinrun_increasing and (time.time()-self.old_evinrun_lastcheck>60):
-            if not self.status['evinrun']>self.old_evinrun:
-                self.set_alarm('No events built in the last minute',1)
+            if self.status['evinrun']<self.old_evinrun:
+                self.Log('Problem with increasing nr. of events in run check')
+            elif self.status['evinrun']==self.old_evinrun:
+                self.set_alarm('No events built in the last minute: stuck at %d'%(int(self.old_evinrun),),1)
             else:
                 self.unset_alarm('No events built in the last minute')
             self.old_evinrun=self.status['evinrun']
