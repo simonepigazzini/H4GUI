@@ -150,7 +150,7 @@ class H4GtkGui:
         self.old_evinrun_lastcheck=time.time()
         gobject.timeout_add(1000,self.check_evinrun_increasing)
 
-        self.videostream()
+#        self.videostream()
 
 # NETWORKING
     def start_network(self):
@@ -1032,7 +1032,7 @@ class H4GtkGui:
     def deal_with_message(self, bus, message):
         gtk.gdk.threads_enter()
         if message.type in [gst.MESSAGE_EOS,gst.MESSAGE_ERROR]:
-            self.video_player.set_state(gst.STATE_NULL)
+            self.player.set_state(gst.STATE_NULL)
         gtk.gdk.threads_leave()
 
     def sync_message(self, bus, message):
