@@ -149,7 +149,7 @@ class H4GtkGui:
         self.do_check_evinrun_increasing=False
         self.old_evinrun=0
         self.old_evinrun_lastcheck=time.time()
-#        gobject.timeout_add(1000,self.check_evinrun_increasing) # TO BE FIXED
+        gobject.timeout_add(1000,self.check_evinrun_increasing) # TO BE FIXED
 
         self.videostream()
 
@@ -187,8 +187,9 @@ class H4GtkGui:
         return True
     def check_evinrun_increasing(self):
         if self.do_check_evinrun_increasing and (time.time()-self.old_evinrun_lastcheck>60):
+            self.Log('TESTING DEBUG %d %d %f %f'%(self.old_evinrun,self.status['evinrun'],self.old_evinrun_lastcheck,time.time(),),1)
             if self.status['evinrun']<self.old_evinrun:
-                self.Log('Problem with increasing nr. of events in run check')
+                self.set_alarm('Problem with increasing nr. of events in run check',1)
             elif self.status['evinrun']==self.old_evinrun:
                 self.set_alarm('No events built in the last minute: stuck at %d'%(int(self.old_evinrun),),1)
             else:
