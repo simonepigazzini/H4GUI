@@ -786,6 +786,8 @@ class H4GtkGui:
             self.old_evinrun=0
             self.old_evinrun_lastcheck=time.time()
 
+        self.set_sens(['tablexspinbutton','tableyspinbutton','movetablebutton'],True) # WARNING: THIS SHOULD NOT BE LIKE THIS!!!
+
 # TABLE POSITION HANDLING
     def get_table_position(self):
         return self.status['table_status']
