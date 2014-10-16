@@ -4,7 +4,7 @@
 def configure(self):
 
     self.debug=False # turn on for network messaging debugging
-    self.activatesounds=False # turn on to play sounds
+    self.activatesounds=True # turn on to play sounds
     self.sumptuous_browser=True # turn on to use browser tabs for DQM display
 
     self.pubsocket_bind_address='tcp://*:5566' # address of GUI PUB socket
