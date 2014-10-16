@@ -149,7 +149,7 @@ class H4GtkGui:
         self.do_check_evinrun_increasing=False
         self.old_evinrun=0
         self.old_evinrun_lastcheck=time.time()
-        gobject.timeout_add(1000,self.check_evinrun_increasing)
+#        gobject.timeout_add(1000,self.check_evinrun_increasing) # TO BE FIXED
 
         self.videostream()
 
