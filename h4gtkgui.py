@@ -905,12 +905,13 @@ class H4GtkGui:
         return True
 
     def get_latest_commit(self):
-        p1 = Popen(['git','--work-tree=../H4DAQ','log','--pretty=format:\"%H\"'], stdout=PIPE)
+        p1 = Popen(['git','--git-dir=../H4DAQ/.git','log','--pretty=format:\"%H\"'], stdout=PIPE)
         p2 = Popen(['head', '-n 1'], stdin=p1.stdout, stdout=PIPE)
         p1.stdout.close()
         output = p2.communicate()[0]
         output=output.replace('\n','')
         output=output.replace('\"','')
+        print 'DAQ commit id = ',str(output)
         return str(output)
 
     def init_dqm_plots(self):
