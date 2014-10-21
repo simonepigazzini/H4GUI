@@ -1231,17 +1231,15 @@
                                                       </packing>
                                                     </child>
                                                     <child>
-                                                      <object class="GtkSpinButton" id="tablexspinbutton">
+                                                      <object class="GtkEntry" id="tablexbutton">
+                                                        <property name="width_request">50</property>
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">True</property>
                                                         <property name="invisible_char">●</property>
-                                                        <property name="invisible_char_set">True</property>
-                                                        <property name="digits">2</property>
-                                                        <property name="numeric">True</property>
                                                       </object>
                                                       <packing>
-                                                        <property name="expand">False</property>
-                                                        <property name="fill">False</property>
+                                                        <property name="expand">True</property>
+                                                        <property name="fill">True</property>
                                                         <property name="position">1</property>
                                                       </packing>
                                                     </child>
@@ -1270,17 +1268,16 @@
                                                       </packing>
                                                     </child>
                                                     <child>
-                                                      <object class="GtkSpinButton" id="tableyspinbutton">
+                                                      <object class="GtkEntry" id="tableybutton">
+                                                        <property name="width_request">50</property>
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">True</property>
                                                         <property name="invisible_char">●</property>
                                                         <property name="invisible_char_set">True</property>
-                                                        <property name="digits">2</property>
-                                                        <property name="numeric">True</property>
                                                       </object>
                                                       <packing>
-                                                        <property name="expand">False</property>
-                                                        <property name="fill">False</property>
+                                                        <property name="expand">True</property>
+                                                        <property name="fill">True</property>
                                                         <property name="position">1</property>
                                                       </packing>
                                                     </child>

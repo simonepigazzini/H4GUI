@@ -101,7 +101,7 @@ class H4GtkGui:
             self.remote[('paused',node)]=0
 
         self.allbuttons=['createbutton','startbutton','pausebutton','stopbutton']
-        self.allrunblock=['runtypebutton','runnumberspinbutton','tablexspinbutton','tableyspinbutton','movetablebutton','filltableposbutton',
+        self.allrunblock=['runtypebutton','runnumberspinbutton','tablexbutton','tableybutton','movetablebutton','filltableposbutton',
                           'runstarttext','runstoptext','showcomments','daqstringentry','pedfrequencyspinbutton',
                           'beamparticlebox','beamenergyentry','beamsigmaxentry','beamsigmayentry',
                           'beamintensityentry','beamtiltxentry','beamtiltyentry']
@@ -364,13 +364,6 @@ class H4GtkGui:
         button.set_increments(100,1000)
         button.set_range(0,1000000)
         button.set_wrap(False)
-        tablebuttons=[self.gm.get_object('tablexspinbutton'),self.gm.get_object('tableyspinbutton')]
-        for button in tablebuttons:
-            button.set_value(0)
-            button.set_numeric(True)
-            button.set_increments(0.10,1)
-            button.set_range(-1000,1000)
-            button.set_wrap(False)
         self.init_gtkcombobox(self.gm.get_object('runtypebutton'),['PHYSICS','PEDESTAL','LED'])
         self.init_gtkcombobox(self.gm.get_object('filltableposbutton'),[None]+self.tableposdictionary.keys())
         self.init_gtkcombobox(self.gm.get_object('beamparticlebox'),['Electron','Positron','Pion','Muon'])
@@ -674,15 +667,15 @@ class H4GtkGui:
         if pos==None:
             return
         x,y = pos
-        self.set_gtkentry(self.gm.get_object('tablexspinbutton'),x)
-        self.set_gtkentry(self.gm.get_object('tableyspinbutton'),y)
+        self.set_gtkentry(self.gm.get_object('tablexbutton'),x)
+        self.set_gtkentry(self.gm.get_object('tableybutton'),y)
 
 # DATATAKINGCONFIG MANIPULATION
     def update_gui_confblock(self):
         self.set_gtkcombobox_entry(self.gm.get_object('runtypebutton'),self.confblock.t['run_type_description'])
         self.set_gtkspinbutton(self.gm.get_object('runnumberspinbutton'),(self.confblock.r['run_number']))
-        self.set_gtkspinbutton(self.gm.get_object('tablexspinbutton'),(self.confblock.r['table_horizontal_position']))
-        self.set_gtkspinbutton(self.gm.get_object('tableyspinbutton'),(self.confblock.r['table_vertical_position']))
+        self.set_gtkentry(self.gm.get_object('tablexbutton'),(self.confblock.r['table_horizontal_position']))
+        self.set_gtkentry(self.gm.get_object('tableybutton'),(self.confblock.r['table_vertical_position']))
         self.set_gtkspinbutton(self.gm.get_object('pedfrequencyspinbutton'),(self.confblock.t['ped_frequency']))
         self.set_gtkentry(self.gm.get_object('runstarttext'),(self.confblock.r['run_start_user_comment']))
         self.set_gtkentry(self.gm.get_object('runstoptext'),(self.confblock.r['run_end_user_comment']))
@@ -697,8 +690,8 @@ class H4GtkGui:
         self.set_gtkentry(self.gm.get_object('runtextbuffer'),self.confblock.r['run_comment'])
     def get_gui_confblock(self):
         self.confblock.r['run_number']=int(self.gm.get_object('runnumberspinbutton').get_value())
-        self.confblock.r['table_horizontal_position']=self.gm.get_object('tablexspinbutton').get_value()
-        self.confblock.r['table_vertical_position']=self.gm.get_object('tableyspinbutton').get_value()
+        self.confblock.r['table_horizontal_position']=float(self.gm.get_object('tablexbutton').get_text())
+        self.confblock.r['table_vertical_position']=float(self.gm.get_object('tableybutton').get_text())
         self.confblock.r['run_start_user_comment']=self.gm.get_object('runstarttext').get_text()
         self.confblock.r['run_end_user_comment']=self.gm.get_object('runstoptext').get_text()
         self.confblock.t['run_type_description']=self.read_gtkcombobox_status(self.gm.get_object('runtypebutton'))
@@ -786,7 +779,7 @@ class H4GtkGui:
             self.old_evinrun=0
             self.old_evinrun_lastcheck=time.time()
 
-        self.set_sens(['tablexspinbutton','tableyspinbutton','movetablebutton'],True) # WARNING: THIS SHOULD NOT BE LIKE THIS!!!
+        self.set_sens(['tablexbutton','tableybutton','movetablebutton'],True) # WARNING: THIS SHOULD NOT BE LIKE THIS!!!
 
 # TABLE POSITION HANDLING
     def get_table_position(self):
@@ -797,6 +790,7 @@ class H4GtkGui:
             return False
         if self.status['table_status']!=(newx,newy,'TAB_DONE'):
             self.status['table_status']=(self.status['table_status'][0],self.status['table_status'][1],'SENT_MOVE_ORDER')
+            self.Log('SENDING TABLE TO %s %s' % (newx,newy,))
             self.send_message('SET_TABLE_POSITION %s %s' % (newx,newy,))
         message='Waiting for table to move to '+str(newx)+' '+str(newy)
         self.mywaiter.reset()
@@ -804,8 +798,8 @@ class H4GtkGui:
         self.mywaiter.set_condition(self.table_is_ok,[newx,newy])
         self.mywaiter.run()
     def on_movetablebutton_clicked(self,*args):
-        x=self.gm.get_object('tablexspinbutton').get_value()
-        y=self.gm.get_object('tableyspinbutton').get_value()
+        x=float(self.gm.get_object('tablexbutton').get_text())
+        y=float(self.gm.get_object('tableybutton').get_text())
         self.set_table_position(x,y)
     def table_is_ok(self,newx,newy):
         if self.get_table_position()==(newx,newy,'TAB_DONE'):
