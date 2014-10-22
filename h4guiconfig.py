@@ -73,4 +73,4 @@ def configure(self):
         }
 
     for i,j in otherxtals.iteritems():
-        self.tableposdictionary[i]=(self.tableposdictionary['HOME']+j[0],self.tableposdictionary['HOME']+j[1])
+        self.tableposdictionary[i]=(self.tableposdictionary['HOME'][0]+j[0],self.tableposdictionary['HOME'][1]+j[1])

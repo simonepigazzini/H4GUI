@@ -779,7 +779,7 @@ class H4GtkGui:
             self.old_evinrun=0
             self.old_evinrun_lastcheck=time.time()
 
-        self.set_sens(['tablexbutton','tableybutton','movetablebutton'],True) # WARNING: THIS SHOULD NOT BE LIKE THIS!!!
+        self.set_sens(['tablexbutton','tableybutton','movetablebutton','filltableposbutton'],True) # WARNING: THIS SHOULD NOT BE LIKE THIS!!!
 
 # TABLE POSITION HANDLING
     def get_table_position(self):
