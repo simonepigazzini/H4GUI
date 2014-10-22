@@ -15,6 +15,7 @@ from subprocess import *
 from zmq import *
 from h4dbclasses import *
 from h4helperclasses import *
+from collections import OrderedDict
 import h4guiconfig
 
 class H4GtkGui:

@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from collections import OrderedDict
+
 def configure(self):
 
     self.debug=False # turn on for network messaging debugging
@@ -41,36 +43,34 @@ def configure(self):
         'kill_daemons': '../H4DAQ/scripts/killall.sh'
         }
 
-    self.tableposdictionary={
-        'HOME': (200.0,250.0)
-        }
+    self.tableposdictionary = OrderedDict()
+    self.tableposdictionary['HOME']=(200.0,250.0)
 
-    otherxtals={
-        'BGO_CRY_1': (-20.0,-25.1),
-        'BGO_CRY_2': (2.0,-25.0),
-        'BGO_CRY_3': (25.0,-22.0),
-        'BGO_CRY_4': (-25.0,-2.0),
-        'BGO_CRY_5': (25.0,2.0),
-        'BGO_CRY_6': (-24.0,20.0),
-        'BGO_CRY_7': (-2.0,25.0),
-        'BGO_CRY_8': (21.0,25.0),
-        'BGO_CRY_9': (-47.0,-51.0),
-        'BGO_CRY_10': (-22.0,-49.0),
-        'BGO_CRY_11': (2.0,-48.0),
-        'BGO_CRY_12': (27.0,-45.0),
-        'BGO_CRY_13': (51.0,-47.0),
-        'BGO_CRY_14': (-46.0,-28.0),
-        'BGO_CRY_15': (50.0,-22.0),
-        'BGO_CRY_16': (-50.0,-3.0),
-        'BGO_CRY_17': (50.0,0.0),
-        'BGO_CRY_18': (-49.0,22.0),
-        'BGO_CRY_19': (46.0,24.0),
-        'BGO_CRY_20': (-49.0,46.0),
-        'BGO_CRY_21': (-25.0,45.0),
-        'BGO_CRY_22': (0.0,49.0),
-        'BGO_CRY_23': (24.0,49.0),
-        'BGO_CRY_24': (49.0,49.0)
-        }
+    otherxtals = OrderedDict()
+    otherxtals['BGO_CRY_1']= (-20.0,-25.1)
+    otherxtals['BGO_CRY_2']= (2.0,-25.0)
+    otherxtals['BGO_CRY_3']= (25.0,-22.0)
+    otherxtals['BGO_CRY_4']= (-25.0,-2.0)
+    otherxtals['BGO_CRY_5']= (25.0,2.0)
+    otherxtals['BGO_CRY_6']= (-24.0,20.0)
+    otherxtals['BGO_CRY_7']= (-2.0,25.0)
+    otherxtals['BGO_CRY_8']= (21.0,25.0)
+    otherxtals['BGO_CRY_9']= (-47.0,-51.0)
+    otherxtals['BGO_CRY_10']= (-22.0,-49.0)
+    otherxtals['BGO_CRY_11']= (2.0,-48.0)
+    otherxtals['BGO_CRY_12']= (27.0,-45.0)
+    otherxtals['BGO_CRY_13']= (51.0,-47.0)
+    otherxtals['BGO_CRY_14']= (-46.0,-28.0)
+    otherxtals['BGO_CRY_15']= (50.0,-22.0)
+    otherxtals['BGO_CRY_16']= (-50.0,-3.0)
+    otherxtals['BGO_CRY_17']= (50.0,0.0)
+    otherxtals['BGO_CRY_18']= (-49.0,22.0)
+    otherxtals['BGO_CRY_19']= (46.0,24.0)
+    otherxtals['BGO_CRY_20']= (-49.0,46.0)
+    otherxtals['BGO_CRY_21']= (-25.0,45.0)
+    otherxtals['BGO_CRY_22']= (0.0,49.0)
+    otherxtals['BGO_CRY_23']= (24.0,49.0)
+    otherxtals['BGO_CRY_24']= (49.0,49.0)
 
     for i,j in otherxtals.iteritems():
         self.tableposdictionary[i]=(self.tableposdictionary['HOME'][0]+j[0],self.tableposdictionary['HOME'][1]+j[1])
