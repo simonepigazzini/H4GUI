@@ -45,32 +45,32 @@ def configure(self):
         'HOME': (200.0,250.0)
         }
 
-#    otherxtals={
-#        'CRY_1': (,),
-#        'CRY_2': (,),
-#        'CRY_3': (,),
-#        'CRY_4': (,),
-#        'CRY_5': (,),
-#        'CRY_6': (,),
-#        'CRY_7': (,),
-#        'CRY_8': (,),
-#        'CRY_9': (,),
-#        'CRY_10': (,),
-#        'CRY_11': (,),
-#        'CRY_12': (,),
-#        'CRY_13': (,),
-#        'CRY_14': (,),
-#        'CRY_15': (,),
-#        'CRY_16': (,),
-#        'CRY_17': (,),
-#        'CRY_18': (,),
-#        'CRY_19': (,),
-#        'CRY_20': (,),
-#        'CRY_21': (,),
-#        'CRY_22': (,),
-#        'CRY_23': (,),
-#        'CRY_24': (,)
-#        }
-#
-#    for i,j in otherxtals.iteritems():
-#        self.tableposdictionary[i]=(self.tableposdictionary['HOME']+j[0],self.tableposdictionary['HOME']+j[1])
+    otherxtals={
+        'BGO_CRY_1': (-20.0,-25.1),
+        'BGO_CRY_2': (2.0,-25.0),
+        'BGO_CRY_3': (25.0,-22.0),
+        'BGO_CRY_4': (-25.0,-2.0),
+        'BGO_CRY_5': (25.0,2.0),
+        'BGO_CRY_6': (-24.0,20.0),
+        'BGO_CRY_7': (-2.0,25.0),
+        'BGO_CRY_8': (21.0,25.0),
+        'BGO_CRY_9': (-47.0,-51.0),
+        'BGO_CRY_10': (-22.0,-49.0),
+        'BGO_CRY_11': (2.0,-48.0),
+        'BGO_CRY_12': (27.0,-45.0),
+        'BGO_CRY_13': (51.0,-47.0),
+        'BGO_CRY_14': (-46.0,-28.0),
+        'BGO_CRY_15': (50.0,-22.0),
+        'BGO_CRY_16': (-50.0,-3.0),
+        'BGO_CRY_17': (50.0,0.0),
+        'BGO_CRY_18': (-49.0,22.0),
+        'BGO_CRY_19': (46.0,24.0),
+        'BGO_CRY_20': (-49.0,46.0),
+        'BGO_CRY_21': (-25.0,45.0),
+        'BGO_CRY_22': (0.0,49.0),
+        'BGO_CRY_23': (24.0,49.0),
+        'BGO_CRY_24': (49.0,49.0)
+        }
+
+    for i,j in otherxtals.iteritems():
+        self.tableposdictionary[i]=(self.tableposdictionary['HOME']+j[0],self.tableposdictionary['HOME']+j[1])
