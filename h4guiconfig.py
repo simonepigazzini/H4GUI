@@ -42,11 +42,35 @@ def configure(self):
         }
 
     self.tableposdictionary={
-        'HOME': (0.00,0.00),
-        'CRY_1': (195.00,115.00),
-        'CRY_2': (215.00,115.00),
-        'CRY_3': (235.00,115.00),
-        'CRY_4': (195.00,135.00),
-        'CRY_5': (215.00,135.00),
-        'CRY_6': (235.00,135.00)
+        'HOME': (200.0,250.0)
         }
+
+#    otherxtals={
+#        'CRY_1': (,),
+#        'CRY_2': (,),
+#        'CRY_3': (,),
+#        'CRY_4': (,),
+#        'CRY_5': (,),
+#        'CRY_6': (,),
+#        'CRY_7': (,),
+#        'CRY_8': (,),
+#        'CRY_9': (,),
+#        'CRY_10': (,),
+#        'CRY_11': (,),
+#        'CRY_12': (,),
+#        'CRY_13': (,),
+#        'CRY_14': (,),
+#        'CRY_15': (,),
+#        'CRY_16': (,),
+#        'CRY_17': (,),
+#        'CRY_18': (,),
+#        'CRY_19': (,),
+#        'CRY_20': (,),
+#        'CRY_21': (,),
+#        'CRY_22': (,),
+#        'CRY_23': (,),
+#        'CRY_24': (,)
+#        }
+#
+#    for i,j in otherxtals.iteritems():
+#        self.tableposdictionary[i]=(self.tableposdictionary['HOME']+j[0],self.tableposdictionary['HOME']+j[1])
