@@ -98,4 +98,4 @@ def configure(self):
     otherxtals['CEF3_DIAG_SE3']= (9.0,-9.0)
 
     for i,j in otherxtals.iteritems():
-        self.tableposdictionary[i]=(self.tableposdictionary['HOME'][0]+j[0],self.tableposdictionary['HOME'][1]-j[1])
+        self.tableposdictionary[i]=(self.tableposdictionary['CEF3_CENTER'][0]+j[0],self.tableposdictionary['CEF3_CENTER'][1]-j[1])
