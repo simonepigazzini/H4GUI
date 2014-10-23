@@ -45,7 +45,7 @@ def configure(self):
 
     self.tableposdictionary = OrderedDict()
     self.tableposdictionary['ZERO']=(0.0,0.0)
-    self.tableposdictionary['CEF3_CENTER']=(200.0,250.0)
+    self.tableposdictionary['CEF3_CENTER']=(194.0,254.0)
 
     otherxtals = OrderedDict() # coordinates seen from the rear face
     otherxtals['BGO_CRY_1']= (-20.0,25.1)
