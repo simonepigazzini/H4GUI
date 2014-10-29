@@ -1022,8 +1022,9 @@ class H4GtkGui:
     def videostream(self):
         gtk.gdk.threads_enter()
         nb = self.gm.get_object('dqmnotebook')
+
         self.webcamarea = gtk.DrawingArea()
-        nb.prepend_page(self.webcamarea,gtk.Label('Webcam'))
+        nb.prepend_page(self.webcamarea,gtk.Label('Webcam 2'))
         nb.show_all()
         self.player = gst.parse_launch('souphttpsrc location=http://axisminn02/mjpg/video.mjpg ! decodebin2 ! xvimagesink')
         bus = self.player.get_bus()
@@ -1032,12 +1033,30 @@ class H4GtkGui:
         bus.enable_sync_message_emission()
         bus.connect("sync-message::element", self.sync_message)
         self.player.set_state(gst.STATE_PLAYING)
+
+        self.webcamarea2 = gtk.DrawingArea()
+        nb.prepend_page(self.webcamarea2,gtk.Label('Webcam 1'))
+        nb.show_all()
+        self.player2 = gst.parse_launch('souphttpsrc location=http://axisminn01/mjpg/video.mjpg ! decodebin2 ! xvimagesink')
+        bus2 = self.player2.get_bus()
+        bus2.add_signal_watch()
+        bus2.connect("message", self.deal_with_message2)
+        bus2.enable_sync_message_emission()
+        bus2.connect("sync-message::element", self.sync_message2)
+        self.player2.set_state(gst.STATE_PLAYING)
+
         gtk.gdk.threads_leave()
 
     def deal_with_message(self, bus, message):
         gtk.gdk.threads_enter()
         if message.type in [gst.MESSAGE_EOS,gst.MESSAGE_ERROR]:
             self.player.set_state(gst.STATE_NULL)
+        gtk.gdk.threads_leave()
+
+    def deal_with_message2(self, bus, message):
+        gtk.gdk.threads_enter()
+        if message.type in [gst.MESSAGE_EOS,gst.MESSAGE_ERROR]:
+            self.player2.set_state(gst.STATE_NULL)
         gtk.gdk.threads_leave()
 
     def sync_message(self, bus, message):
@@ -1049,6 +1068,17 @@ class H4GtkGui:
             imagesink = message.src
             imagesink.set_property("force-aspect-ratio", True)
             imagesink.set_xwindow_id(self.webcamarea.window.xid)
+        gtk.gdk.threads_leave()
+
+    def sync_message2(self, bus, message):
+        if message.structure is None:
+            return
+        gtk.gdk.threads_enter()
+        message_name = message.structure.get_name()
+        if message_name == "prepare-xwindow-id":
+            imagesink = message.src
+            imagesink.set_property("force-aspect-ratio", True)
+            imagesink.set_xwindow_id(self.webcamarea2.window.xid)
         gtk.gdk.threads_leave()
 
 
