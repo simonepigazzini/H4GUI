@@ -167,7 +167,7 @@ class H4GtkGui:
         self.pub = self.context.socket(PUB)
         self.pub.bind(self.pubsocket_bind_address)
         gobject.idle_add(self.poll_sockets)
-        gobject.timeout_add(10000,self.check_keepalive)
+        gobject.timeout_add(30000,self.check_keepalive)
         return False
     def poll_sockets(self):
         socks = dict(self.poller.poll(1))
