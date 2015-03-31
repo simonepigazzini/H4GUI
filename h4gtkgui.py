@@ -546,10 +546,10 @@ class H4GtkGui:
 
     def startrun(self):
         self.get_gui_confblock()
-        if not self.table_is_ok(self.confblock.r['table_horizontal_position'],self.confblock.r['table_vertical_position']):
-            self.Log('Table condition does not allow to start run: have you forgotten to actually move the table? Current situation:')
-            self.Log(str(self.status['table_status']))
-            return
+#        if not self.table_is_ok(self.confblock.r['table_horizontal_position'],self.confblock.r['table_vertical_position']):
+#            self.Log('Table condition does not allow to start run: have you forgotten to actually move the table? Current situation:')
+#            self.Log(str(self.status['table_status']))
+#            return
         if self.confblock.t['run_type_description'] in ['PEDESTAL','LED']:
             if self.confblock.t['ped_frequency']==0:
                 self.Log('You have to set a number of triggers per spill different from 0 for PEDESTAL or LED runs (otherwise you would produce empty spills).')
