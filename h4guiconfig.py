@@ -13,7 +13,7 @@ def configure(self):
 
     self.nodes=[ # addresses of connected nodes
         ('RC','tcp://pcethtb2.cern.ch:6002'),
-        ('RO1','tcp://pcethtb1.cern.ch:6002'),
+#        ('RO1','tcp://pcethtb1.cern.ch:6002'),
 #        ('RO2','tcp://cms-h4-03:6002'),
         ('EVTB','tcp://pcethtb2.cern.ch:6502'),
         ('table','tcp://cms-h4-01:6999')
@@ -21,7 +21,7 @@ def configure(self):
 
     self.keepalive={} # nodes to monitor (comment to remove, never put False)
     self.keepalive['RC']=True
-    self.keepalive['RO1']=True
+    self.keepalive['RO1']=False
     self.keepalive['RO2']=False
     self.keepalive['EVTB']=True
     self.keepalive['table']=True
@@ -39,8 +39,9 @@ def configure(self):
         'sync_clocks': '../H4DAQ/scripts/syncclocks.sh',
         'free_space': None,
 #        'start_daemons': '../H4DAQ/scripts/startall.sh -v3 --rc=pcethtb2 --eb=pcethtb2 --dr=pcethtb1',
-        'start_daemons': '../H4DAQ/scripts/startall.sh -v3 --rc=pcethtb2 --eb=pcethtb2 --dr=pcethtb1',
-        'start_daemons': '../H4DAQ/scripts/startall.sh -v3 --rc=pcethtb2 --eb=pcethtb2 --dr=pcethtb1,cms-h4-03',
+#        'start_daemons': '../H4DAQ/scripts/startall.sh -v3 --rc=pcethtb2 --eb=pcethtb2 --dr=pcethtb1',
+        'start_daemons': '../H4DAQ/scripts/startall.sh -v3 --rc=pcethtb2 --eb=pcethtb2',
+#        'start_daemons': '../H4DAQ/scripts/startall.sh -v3 --rc=pcethtb2 --eb=pcethtb2 --dr=pcethtb1,cms-h4-03',
         'kill_daemons': '../H4DAQ/scripts/killall.sh'
         }
 
