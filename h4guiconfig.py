@@ -21,10 +21,10 @@ def configure(self):
 
     self.keepalive={} # nodes to monitor (comment to remove, never put False)
     self.keepalive['RC']=True
-    self.keepalive['RO1']=False
-    self.keepalive['RO2']=False
+#    self.keepalive['RO1']=False
+#    self.keepalive['RO2']=False
     self.keepalive['EVTB']=True
-    self.keepalive['table']=False
+#    self.keepalive['table']=False
 
     self.temperatureplot=None # 'http://blabla/tempplot.png' to be displayed for temperature history
 

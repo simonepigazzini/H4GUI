@@ -479,7 +479,7 @@
                                             <property name="height_request">50</property>
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
-                                            <property name="label" translatable="yes">Run controller: UNKNOWN</property>
+                                            <property name="label" translatable="yes">Run controller: N/A</property>
                                             <attributes>
                                               <attribute name="weight" value="bold"/>
                                               <attribute name="underline" value="True"/>
@@ -503,7 +503,7 @@
                                           <object class="GtkLabel" id="ro1label">
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
-                                            <property name="label" translatable="yes">Data readout unit 1: UNKNOWN</property>
+                                            <property name="label" translatable="yes">Data readout unit 1: N/A</property>
                                             <attributes>
                                               <attribute name="scale" value="1.2"/>
                                             </attributes>
@@ -518,7 +518,7 @@
                                           <object class="GtkLabel" id="ro2label">
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
-                                            <property name="label" translatable="yes">Data readout unit 2: UNKNOWN</property>
+                                            <property name="label" translatable="yes">Data readout unit 2: N/A</property>
                                             <attributes>
                                               <attribute name="scale" value="1.2"/>
                                             </attributes>
@@ -533,7 +533,7 @@
                                           <object class="GtkLabel" id="evtblabel">
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
-                                            <property name="label" translatable="yes">Event builder: UNKNOWN</property>
+                                            <property name="label" translatable="yes">Event builder: N/A</property>
                                             <attributes>
                                               <attribute name="scale" value="1.2"/>
                                             </attributes>
@@ -936,7 +936,7 @@
                                               <object class="GtkLabel" id="tableposlabel">
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">False</property>
-                                                <property name="label" translatable="yes">Table pos. (mm): 0 / 0 / UNKNOWN</property>
+                                                <property name="label" translatable="yes">Table pos. (mm): 0 / 0 / N/A</property>
                                                 <attributes>
                                                   <attribute name="scale" value="1.2"/>
                                                 </attributes>
