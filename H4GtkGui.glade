@@ -289,7 +289,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="n_rows">2</property>
-                <property name="n_columns">5</property>
+                <property name="n_columns">6</property>
                 <child>
                   <object class="GtkButton" id="dummyguibutton">
                     <property name="label">Dummy GUI</property>
@@ -300,8 +300,8 @@
                     <signal name="clicked" handler="on_dummyguibutton_clicked" swapped="no"/>
                   </object>
                   <packing>
-                    <property name="left_attach">4</property>
-                    <property name="right_attach">5</property>
+                    <property name="left_attach">5</property>
+                    <property name="right_attach">6</property>
                     <property name="bottom_attach">2</property>
                   </packing>
                 </child>
@@ -320,6 +320,22 @@
                   </packing>
                 </child>
                 <child>
+                  <object class="GtkButton" id="reconfigRC">
+                    <property name="label">ReConfig DAQ</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="receives_default">True</property>
+                    <property name="use_action_appearance">False</property>
+                    <signal name="clicked" handler="on_reconfigbuttonRC_clicked" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">3</property>
+                    <property name="right_attach">4</property>
+                    <property name="top_attach">1</property>
+                    <property name="bottom_attach">2</property>
+                  </packing>
+                </child>
+                <child>
                   <object class="GtkButton" id="quitbutton">
                     <property name="label">Quit GUI</property>
                     <property name="visible">True</property>
@@ -329,9 +345,9 @@
                     <signal name="clicked" handler="on_buttonquit_clicked" swapped="no"/>
                   </object>
                   <packing>
-                    <property name="left_attach">3</property>
-                    <property name="right_attach">4</property>
-                    <property name="top_attach">1</property>
+                    <property name="left_attach">4</property>
+                    <property name="right_attach">5</property>
+                    <property name="top_attach">0</property>
                     <property name="bottom_attach">2</property>
                   </packing>
                 </child>

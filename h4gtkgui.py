@@ -31,7 +31,8 @@ class H4GtkGui:
             'pauserun': 'GUI_PAUSERUN',
             'restartrun': 'GUI_RESTARTRUN',
             'stoprun': 'GUI_STOPRUN',
-            'die': 'GUI_DIE'
+            'die': 'GUI_DIE',
+            'reconfig': 'GUI_RECONFIG'
             }
         self.gui_in_messages={
             'status': 'STATUS',
@@ -546,14 +547,14 @@ class H4GtkGui:
 
     def startrun(self):
         self.get_gui_confblock()
-#        if not self.table_is_ok(self.confblock.r['table_horizontal_position'],self.confblock.r['table_vertical_position']):
-#            self.Log('Table condition does not allow to start run: have you forgotten to actually move the table? Current situation:')
-#            self.Log(str(self.status['table_status']))
-#            return
-        if self.confblock.t['run_type_description'] in ['PEDESTAL','LED']:
-            if self.confblock.t['ped_frequency']==0:
-                self.Log('You have to set a number of triggers per spill different from 0 for PEDESTAL or LED runs (otherwise you would produce empty spills).')
-                return
+        #        if not self.table_is_ok(self.confblock.r['table_horizontal_position'],self.confblock.r['table_vertical_position']):
+        #            self.Log('Table condition does not allow to start run: have you forgotten to actually move the table? Current situation:')
+        #            self.Log(str(self.status['table_status']))
+        #            return
+        #        if self.confblock.t['run_type_description'] in ['PEDESTAL','LED']:
+        if self.confblock.t['ped_frequency']==0:
+            self.Log('Beware: You have set a number of triggers per spill to 0: for PEDESTAL, LED runs or without HW spill signals you will produce empty spills')
+        #            return
         for key,node,val in [(a[0],a[1],b) for a,b in self.remote.iteritems()]:
             if key!='statuscode':
                 continue
@@ -567,6 +568,16 @@ class H4GtkGui:
         self.update_gui_confblock()
         self.Log('Sending START for run '+str(self.confblock.r['run_number']))
         self.send_message(str(' ').join([str(self.gui_out_messages['startrun']),str(self.confblock.r['run_number']),str(self.confblock.t['run_type_description']),str(self.confblock.t['ped_frequency'])]))        
+
+    def reconfig(self):
+        for key,node,val in [(a[0],a[1],b) for a,b in self.remote.iteritems()]:
+            if key!='statuscode':
+                continue
+            if node in ['RC','RO1','RO2','EVTB']:
+                if val!=self.remotestatus_betweenruns:
+                    self.Log('Cannot issue RECONFIG for node %s'%(str(node),))
+                    return
+        self.send_message(self.gui_out_messages['reconfig'])       
 
     def pauserun(self):
         if self.status['localstatus']=='RUNNING':
@@ -610,6 +621,12 @@ class H4GtkGui:
         self.mywaiter.reset()
         self.mywaiter.set_layout('<b>Do you want to quit the DAQ?</b>','Cancel','Yes',color='orange')
         self.mywaiter.set_exit_func(self.send_message,[self.gui_out_messages['die']])
+        self.mywaiter.run()        
+    def on_reconfigbuttonRC_clicked(self,*args):
+        self.Log("Request to reconfig controller from GUI user")
+        self.mywaiter.reset()
+        self.mywaiter.set_layout('<b>Do you want to reconfig the DAQ?</b>','Cancel','Yes',color='orange')
+        self.mywaiter.set_exit_func(self.reconfig,[])
         self.mywaiter.run()        
     def on_createbutton_clicked(self,*args):
         self.createrun()
