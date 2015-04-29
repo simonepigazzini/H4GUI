@@ -289,7 +289,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="n_rows">2</property>
-                <property name="n_columns">5</property>
+                <property name="n_columns">6</property>
                 <child>
                   <object class="GtkButton" id="dummyguibutton">
                     <property name="label">Dummy GUI</property>
@@ -320,6 +320,22 @@
                   </packing>
                 </child>
                 <child>
+                  <object class="GtkButton" id="reconfigRC">
+                    <property name="label">ReConfig DAQ</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="receives_default">True</property>
+                    <property name="use_action_appearance">False</property>
+                    <signal name="clicked" handler="on_reconfigbuttonRC_clicked" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">3</property>
+                    <property name="right_attach">4</property>
+                    <property name="top_attach">1</property>
+                    <property name="bottom_attach">2</property>
+                  </packing>
+                </child>
+                <child>
                   <object class="GtkButton" id="quitbutton">
                     <property name="label">Quit GUI</property>
                     <property name="visible">True</property>
@@ -329,9 +345,9 @@
                     <signal name="clicked" handler="on_buttonquit_clicked" swapped="no"/>
                   </object>
                   <packing>
-                    <property name="left_attach">3</property>
-                    <property name="right_attach">4</property>
-                    <property name="top_attach">1</property>
+                    <property name="left_attach">5</property>
+                    <property name="right_attach">6</property>
+                    <property name="top_attach">0</property>
                     <property name="bottom_attach">2</property>
                   </packing>
                 </child>
@@ -479,7 +495,7 @@
                                             <property name="height_request">50</property>
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
-                                            <property name="label" translatable="yes">Run controller: UNKNOWN</property>
+                                            <property name="label" translatable="yes">Run controller: N/A</property>
                                             <attributes>
                                               <attribute name="weight" value="bold"/>
                                               <attribute name="underline" value="True"/>
@@ -503,7 +519,7 @@
                                           <object class="GtkLabel" id="ro1label">
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
-                                            <property name="label" translatable="yes">Data readout unit 1: UNKNOWN</property>
+                                            <property name="label" translatable="yes">Data readout unit 1: N/A</property>
                                             <attributes>
                                               <attribute name="scale" value="1.2"/>
                                             </attributes>
@@ -518,7 +534,7 @@
                                           <object class="GtkLabel" id="ro2label">
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
-                                            <property name="label" translatable="yes">Data readout unit 2: UNKNOWN</property>
+                                            <property name="label" translatable="yes">Data readout unit 2: N/A</property>
                                             <attributes>
                                               <attribute name="scale" value="1.2"/>
                                             </attributes>
@@ -533,7 +549,7 @@
                                           <object class="GtkLabel" id="evtblabel">
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
-                                            <property name="label" translatable="yes">Event builder: UNKNOWN</property>
+                                            <property name="label" translatable="yes">Event builder: N/A</property>
                                             <attributes>
                                               <attribute name="scale" value="1.2"/>
                                             </attributes>
@@ -936,7 +952,7 @@
                                               <object class="GtkLabel" id="tableposlabel">
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">False</property>
-                                                <property name="label" translatable="yes">Table pos. (mm): 0 / 0 / UNKNOWN</property>
+                                                <property name="label" translatable="yes">Table pos. (mm): 0 / 0 / N/A</property>
                                                 <attributes>
                                                   <attribute name="scale" value="1.2"/>
                                                 </attributes>
@@ -1483,7 +1499,7 @@
                                                           <object class="GtkLabel" id="label8">
                                                             <property name="visible">True</property>
                                                             <property name="can_focus">False</property>
-                                                            <property name="label" translatable="yes">   Ped. / spill:</property>
+                                                            <property name="label" translatable="yes">   Ev. / spill:</property>
                                                           </object>
                                                           <packing>
                                                             <property name="expand">True</property>

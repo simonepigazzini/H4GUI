@@ -239,7 +239,6 @@ class DataTakingConfigHandler:
 
     def add_into_db(self,thisconf):
         thisconf.r['run_number']=None
-        thisconf.r['run_nevents']=None
         thisconf.r['run_exit_code']=None
         runtypeid=self.db.find(thisconf.t,'run_type',ignore_id=True)
         if runtypeid<0:
