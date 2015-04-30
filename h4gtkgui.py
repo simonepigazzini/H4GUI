@@ -306,11 +306,16 @@ class H4GtkGui:
             self.gm.get_object('runstatuslabel').set_text(str(' ').join(('Run controller:',self.remote[('status','RC')])))
             self.flash_widget(self.gm.get_object('runstatusbox'),'green')
         if 'RO1' in [x[0] for x in self.nodes]:
-            self.gm.get_object('ro1label').set_text( str(' ').join(('Data readout unit 1:',self.remote[('status','RO1')])))
+            self.gm.get_object('ro1label').set_text( str(' ').join(('DRO 1:',self.remote[('status','RO1')])))
         if 'RO2' in [x[0] for x in self.nodes]:
-            self.gm.get_object('ro2label').set_text( str(' ').join(('Data readout unit 2:',self.remote[('status','RO2')])))
+            self.gm.get_object('ro2label').set_text( str(' ').join(('DRO 2:',self.remote[('status','RO2')])))
         if 'EVTB' in [x[0] for x in self.nodes]:
-            self.gm.get_object('evtblabel').set_text(str(' ').join(('Event builder:',self.remote[('status','EVTB')])))
+            self.gm.get_object('evtblabel').set_text(str(' ').join(('Event Builder:',self.remote[('status','EVTB')])))
+        if 'DRCV1' in [x[0] for x in self.nodes]:
+            self.gm.get_object('drcv1label').set_text(str(' ').join(('DRCV 1:',self.remote[('status','DRCV1')])))
+        if 'DRCV2' in [x[0] for x in self.nodes]:
+            self.gm.get_object('drcv2label').set_text(str(' ').join(('DRCV 2:',self.remote[('status','DRCV2')])))
+
         self.gm.get_object('runnumberlabel').set_text(str().join(['Run number: ',str(self.status['runnumber'])]))
         self.gm.get_object('spillnumberlabel').set_text(str().join(['Spill number: ',str(self.status['spillnumber'])]))
         self.gm.get_object('badspillslabel').set_text(str().join(['Nr. of bad spills: ',str(self.status['badspills'])]))

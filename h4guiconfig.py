@@ -16,6 +16,8 @@ def configure(self):
         #        ('RO1','tcp://pcethtb1.cern.ch:6002'),
         #        ('RO2','tcp://cms-h4-03:6002'),
         ('EVTB','tcp://pcethtb2.cern.ch:6502'),
+        ('DRCV1','tcp://cms-h4-04.cern.ch:6502'),
+        ('DRCV2','tcp://cms-h4-03.cern.ch:6502')
         #        ('table','tcp://cms-h4-01:6999')
         ]
 
@@ -24,6 +26,8 @@ def configure(self):
 #    self.keepalive['RO1']=False
 #    self.keepalive['RO2']=False
     self.keepalive['EVTB']=True
+    self.keepalive['DRCV1']=True
+    self.keepalive['DRCV2']=True
 #    self.keepalive['table']=False
 
     self.temperatureplot=None # 'http://blabla/tempplot.png' to be displayed for temperature history
