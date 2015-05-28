@@ -828,7 +828,16 @@ class H4GtkGui:
         if self.get_table_position()==(newx,newy,'TAB_DONE'):
             return True
         return False
-
+    def stop_table(self):
+        if self.get_table_position()[2]!='TAB_DONE':
+            self.Log('Stopping Table')
+#            self.send_message('STOP_TABLE')
+        self.mywaiter.reset()
+        self.mywaiter.set_layout('Waiting for stopping table',None,'Force ACK table stop', color='green')
+        self.mywaiter.set_condition(self.get_table_position()[2]!='TAB_DONE',[self.get_table_position()[0],self.get_table_position()[1]])
+        self.mywaiter.run()
+    def on_stoptablebutton_clicked(self,*args):
+        self.stop_table()
 
 # GENERAL INPUT WINDOW
     def generalinputwindow(self,label,func):
