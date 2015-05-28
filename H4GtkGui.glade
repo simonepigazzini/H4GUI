@@ -345,6 +345,22 @@
                     <signal name="clicked" handler="on_buttonquit_clicked" swapped="no"/>
                   </object>
                   <packing>
+                    <property name="left_attach">6</property>
+                    <property name="right_attach">7</property>
+                    <property name="top_attach">0</property>
+                    <property name="bottom_attach">2</property>
+                  </packing>
+                </child>
+                <child>
+		  <object class="GtkButton" id="stopTable">
+                    <property name="label">STOP Table</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="receives_default">True</property>
+                    <property name="use_action_appearance">False</property>
+                    <signal name="clicked" handler="on_stopTable_clicked" swapped="no"/>
+                  </object>
+                  <packing>
                     <property name="left_attach">5</property>
                     <property name="right_attach">6</property>
                     <property name="top_attach">0</property>
