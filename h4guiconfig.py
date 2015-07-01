@@ -28,7 +28,7 @@ def configure(self):
     self.keepalive['EVTB']=True
     self.keepalive['DRCV1']=True
     self.keepalive['DRCV2']=True
-    self.keepalive['table']=False
+#    self.keepalive['table']=False
 
     self.temperatureplot=None # 'http://blabla/tempplot.png' to be displayed for temperature history
 
