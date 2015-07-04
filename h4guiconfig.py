@@ -17,7 +17,7 @@ def configure(self):
         #        ('RO2','tcp://cms-h4-03:6002'),
         ('EVTB','tcp://pcethtb1.cern.ch:6502'),
         ('DRCV1','tcp://cms-h4-04.cern.ch:6502'),
-        ('DRCV2','tcp://cms-h4-05.cern.ch:6502'),
+        ('DRCV2','tcp://pcethtb2.cern.ch:6502'),
 #        ('table','tcp://cms-h4-01:6999')
         ]
 
@@ -44,7 +44,7 @@ def configure(self):
         'free_space': None,
 #        'start_daemons': '../H4DAQ/scripts/startall.sh -v3 --rc=pcethtb2 --eb=pcethtb2 --dr=pcethtb1',
 #        'start_daemons': '../H4DAQ/scripts/startall.sh -v3 --rc=pcethtb2 --eb=pcethtb2 --dr=pcethtb1',
-        'start_daemons': '../H4DAQ/scripts/startall.sh -v3 --rc=pcethtb1 --eb=pcethtb1 --drcv=cms-h4-04,cms-h4-05 --drcvrecompile',
+        'start_daemons': '../H4DAQ/scripts/startall.sh -v3 --rc=pcethtb1 --eb=pcethtb1 --drcv=cms-h4-04,pcethtb2 --drcvrecompile',
 #        'start_daemons': '../H4DAQ/scripts/startall.sh -v3 --rc=pcethtb2 --eb=pcethtb1 --dr=pcethtb1 --drcv=cms-h4-05 --drcvrecompile',
 #        'start_daemons': '../H4DAQ/scripts/startall.sh -v3 --rc=pcethtb2 --eb=pcethtb2 --dr=pcethtb1',
 #        'start_daemons': '../H4DAQ/scripts/startall.sh -v3 --rc=pcethtb2 --dr=pcethtb1 --drcv=cms-h4-04,cms-h4-05 --drcvrecompile',
